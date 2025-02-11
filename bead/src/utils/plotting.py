@@ -17,8 +17,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
-from tqdm import tqdm
-from tqdm import trange
+from tqdm.rich import tqdm
 
 
 def loss_plot(path_to_loss_data, output_path, config):
@@ -404,7 +403,7 @@ def plot_2D(project_path, config):
     #     )
 
     print("=== Plotting ===")
-    for ind in trange(num_tiles):
+    for ind in tqdm(range(num_tiles)):
         # if config.model_type == "convolutional":
         #     tile_data_decompressed = data_decompressed[ind][0]
         # elif config.model_type == "dense":
