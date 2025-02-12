@@ -1,3 +1,3 @@
-from .bead import main
+from bead import main
 
 main()

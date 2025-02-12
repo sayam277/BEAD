@@ -93,11 +93,13 @@ def mse_loss_emd_l1(model_children, true_data, reconstructed_data, reg_param, va
     Computes a sparse loss function consisting of three terms: the Earth Mover's Distance (EMD) loss between the
     true and reconstructed data, the mean squared error (MSE) loss between the reconstructed and true data, and a
     L1 regularization term on the output of a list of model children.
+    
     Args: model_children (list): List of PyTorch modules representing the model architecture to be regularized.
     true_data (torch.Tensor): The ground truth data, with shape (batch_size, num_features). reconstructed_data (
     torch.Tensor): The reconstructed data, with shape (batch_size, num_features). reg_param (float): The weight of
     the L1 regularization term in the loss function. validate (bool): If True, returns only the EMD loss. If False,
     computes the full loss with the L1 regularization term.
+    
     Returns:
         If validate is False, returns a tuple with three elements:
         - loss (torch.Tensor): The full sparse loss function, with shape ().
@@ -138,11 +140,13 @@ def mse_loss_l1(model_children, true_data, reconstructed_data, reg_param, valida
     """
     Computes a sparse loss function consisting of two terms: the mean squared error (MSE) loss between the
     reconstructed and true data, and a L1 regularization term on the output of a list of model children.
+    
     Args: model_children (list): List of PyTorch modules representing the model architecture to be regularized.
     true_data (torch.Tensor): The ground truth data, with shape (batch_size, num_features). reconstructed_data (
     torch.Tensor): The reconstructed data, with shape (batch_size, num_features). reg_param (float): The weight of
     the L1 regularization term in the loss function. validate (bool): If True, returns only the MSE loss. If False,
     computes the full loss with the L1 regularization term.
+    
     Returns:
         If validate is False, returns a tuple with three elements:
         - loss (torch.Tensor): The full sparse loss function, with shape ().

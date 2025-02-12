@@ -31,7 +31,7 @@ class MaskedLinear(nn.Module):
         if bias:
             self.bias = Parameter(torch.FloatTensor(out_features))
         else:
-            self.register_parameter('bias', None)
+            self.register_parameter("bias", None)
         mask = torch.from_numpy(self.build_mask())
         if torch.cuda.is_available():
             mask = mask.cuda()
@@ -51,15 +51,15 @@ class MaskedLinear(nn.Module):
         if n_out >= n_in:
             k = n_out // n_in
             for i in range(n_in):
-                mask[i + 1:, i * k:(i + 1) * k] = 0
+                mask[i + 1 :, i * k : (i + 1) * k] = 0
                 if self.diagonal_zeros:
-                    mask[i:i + 1, i * k:(i + 1) * k] = 0
+                    mask[i : i + 1, i * k : (i + 1) * k] = 0
         else:
             k = n_in // n_out
             for i in range(n_out):
-                mask[(i + 1) * k:, i:i + 1] = 0
+                mask[(i + 1) * k :, i : i + 1] = 0
                 if self.diagonal_zeros:
-                    mask[i * k:(i + 1) * k:, i:i + 1] = 0
+                    mask[i * k : (i + 1) * k :, i : i + 1] = 0
         return mask
 
     def forward(self, x):
@@ -75,26 +75,42 @@ class MaskedLinear(nn.Module):
             bias = True
         else:
             bias = False
-        return self.__class__.__name__ + ' (' \
-            + str(self.in_features) + ' -> ' \
-            + str(self.out_features) + ', diagonal_zeros=' \
-            + str(self.diagonal_zeros) + ', bias=' \
-            + str(bias) + ')'
+        return (
+            self.__class__.__name__
+            + " ("
+            + str(self.in_features)
+            + " -> "
+            + str(self.out_features)
+            + ", diagonal_zeros="
+            + str(self.diagonal_zeros)
+            + ", bias="
+            + str(bias)
+            + ")"
+        )
 
 
 class MaskedConv2d(nn.Module):
 
-    def __init__(self, in_features, out_features, size_kernel=(3, 3), diagonal_zeros=False, bias=True):
+    def __init__(
+        self,
+        in_features,
+        out_features,
+        size_kernel=(3, 3),
+        diagonal_zeros=False,
+        bias=True,
+    ):
         super(MaskedConv2d, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.size_kernel = size_kernel
         self.diagonal_zeros = diagonal_zeros
-        self.weight = Parameter(torch.FloatTensor(out_features, in_features, *self.size_kernel))
+        self.weight = Parameter(
+            torch.FloatTensor(out_features, in_features, *self.size_kernel)
+        )
         if bias:
             self.bias = Parameter(torch.FloatTensor(out_features))
         else:
-            self.register_parameter('bias', None)
+            self.register_parameter("bias", None)
         mask = torch.from_numpy(self.build_mask())
         if torch.cuda.is_available():
             mask = mask.cuda()
@@ -114,22 +130,24 @@ class MaskedConv2d(nn.Module):
         # Build autoregressive mask
         l = (self.size_kernel[0] - 1) // 2
         m = (self.size_kernel[1] - 1) // 2
-        mask = np.ones((n_out, n_in, self.size_kernel[0], self.size_kernel[1]), dtype=np.float32)
+        mask = np.ones(
+            (n_out, n_in, self.size_kernel[0], self.size_kernel[1]), dtype=np.float32
+        )
         mask[:, :, :l, :] = 0
         mask[:, :, l, :m] = 0
 
         if n_out >= n_in:
             k = n_out // n_in
             for i in range(n_in):
-                mask[i * k:(i + 1) * k, i + 1:, l, m] = 0
+                mask[i * k : (i + 1) * k, i + 1 :, l, m] = 0
                 if self.diagonal_zeros:
-                    mask[i * k:(i + 1) * k, i:i + 1, l, m] = 0
+                    mask[i * k : (i + 1) * k, i : i + 1, l, m] = 0
         else:
             k = n_in // n_out
             for i in range(n_out):
-                mask[i:i + 1, (i + 1) * k:, l, m] = 0
+                mask[i : i + 1, (i + 1) * k :, l, m] = 0
                 if self.diagonal_zeros:
-                    mask[i:i + 1, i * k:(i + 1) * k:, l, m] = 0
+                    mask[i : i + 1, i * k : (i + 1) * k :, l, m] = 0
 
         return mask
 
@@ -142,16 +160,26 @@ class MaskedConv2d(nn.Module):
             bias = True
         else:
             bias = False
-        return self.__class__.__name__ + ' (' \
-            + str(self.in_features) + ' -> ' \
-            + str(self.out_features) + ', diagonal_zeros=' \
-            + str(self.diagonal_zeros) + ', bias=' \
-            + str(bias) + ', size_kernel=' \
-            + str(self.size_kernel) + ')'
+        return (
+            self.__class__.__name__
+            + " ("
+            + str(self.in_features)
+            + " -> "
+            + str(self.out_features)
+            + ", diagonal_zeros="
+            + str(self.diagonal_zeros)
+            + ", bias="
+            + str(bias)
+            + ", size_kernel="
+            + str(self.size_kernel)
+            + ")"
+        )
 
 
 class CNN_Flow_Layer(nn.Module):
-    def __init__(self, dim, kernel_size, dilation, test_mode=0, rescale=True, skip=True):
+    def __init__(
+        self, dim, kernel_size, dilation, test_mode=0, rescale=True, skip=True
+    ):
         super(CNN_Flow_Layer, self).__init__()
 
         self.dim = dim
@@ -162,32 +190,37 @@ class CNN_Flow_Layer(nn.Module):
         self.skip = skip
         self.usecuda = True
 
-        if self.rescale: # last layer of flow needs to account for the scale of target variable
+        if (
+            self.rescale
+        ):  # last layer of flow needs to account for the scale of target variable
             self.lmbd = nn.Parameter(torch.FloatTensor(self.dim).normal_().cuda())
-        
+
         self.conv1d = nn.Conv1d(1, 1, kernel_size, dilation=dilation)
-            
+
     def forward(self, x):
 
         # pad zero to the right
-        padded_x = F.pad(x, (0, (self.kernel_size-1) * self.dilation))
+        padded_x = F.pad(x, (0, (self.kernel_size - 1) * self.dilation))
 
-        conv1d = self.conv1d(padded_x.unsqueeze(1)).squeeze() #(bs, 1, width)
+        conv1d = self.conv1d(padded_x.unsqueeze(1)).squeeze()  # (bs, 1, width)
 
-        w = self.conv1d.weight.squeeze()        
+        w = self.conv1d.weight.squeeze()
 
         # make sure u[i]w[0] >= -1 to ensure invertibility for h(x)=tanh(x) and with skip
 
         neg_slope = 1e-2
         activation = F.leaky_relu(conv1d, negative_slope=neg_slope)
-        activation_gradient = ((activation>=0).float() + (activation<0).float()*neg_slope)
+        activation_gradient = (activation >= 0).float() + (
+            activation < 0
+        ).float() * neg_slope
 
         # for 0<=h'(x)<=1, ensure u*w[0]>-1
-        scale = (w[0] == 0).float() * self.lmbd \
-                +(w[0] > 0).float() * (-1./w[0] + F.softplus(self.lmbd)) \
-                +(w[0] < 0).float() * (-1./w[0] - F.softplus(self.lmbd))
+        scale = (
+            (w[0] == 0).float() * self.lmbd
+            + (w[0] > 0).float() * (-1.0 / w[0] + F.softplus(self.lmbd))
+            + (w[0] < 0).float() * (-1.0 / w[0] - F.softplus(self.lmbd))
+        )
 
-        
         if self.rescale:
             if self.test_mode:
                 activation = activation.unsqueeze(dim=0)
@@ -199,13 +232,13 @@ class CNN_Flow_Layer(nn.Module):
 
         if self.skip:
             output = output + x
-            logdet = torch.log(torch.abs(activation_gradient*w[0] + 1)).sum(1)
-        
+            logdet = torch.log(torch.abs(activation_gradient * w[0] + 1)).sum(1)
+
         else:
-            logdet = torch.log(torch.abs(activation_gradient*w[0])).sum(1)
+            logdet = torch.log(torch.abs(activation_gradient * w[0])).sum(1)
 
         return output, logdet
-        
+
 
 class Dilation_Block(nn.Module):
     def __init__(self, dim, kernel_size, test_mode=0):
@@ -214,9 +247,11 @@ class Dilation_Block(nn.Module):
         self.block = nn.ModuleList()
         i = 0
         while 2**i <= dim:
-            conv1d = CNN_Flow_Layer(dim, kernel_size, dilation=2**i, test_mode=test_mode)
+            conv1d = CNN_Flow_Layer(
+                dim, kernel_size, dilation=2**i, test_mode=test_mode
+            )
             self.block.append(conv1d)
-            i+= 1
+            i += 1
 
     def forward(self, x):
         logdetSum = 0
@@ -241,11 +276,11 @@ class GraphConvolution(Module):
         if bias:
             self.bias = Parameter(torch.FloatTensor(out_features))
         else:
-            self.register_parameter('bias', None)
+            self.register_parameter("bias", None)
         self.reset_parameters()
 
     def reset_parameters(self):
-        stdv = 1. / math.sqrt(self.weight.size(1))
+        stdv = 1.0 / math.sqrt(self.weight.size(1))
         self.weight.data.uniform_(-stdv, stdv)
         if self.bias is not None:
             self.bias.data.uniform_(-stdv, stdv)
@@ -259,15 +294,21 @@ class GraphConvolution(Module):
             return output
 
     def __repr__(self):
-        return self.__class__.__name__ + ' (' \
-               + str(self.in_features) + ' -> ' \
-               + str(self.out_features) + ')'
+        return (
+            self.__class__.__name__
+            + " ("
+            + str(self.in_features)
+            + " -> "
+            + str(self.out_features)
+            + ")"
+        )
 
 
 class FCNN(nn.Module):
     """
     Simple fully connected neural network.
     """
+
     def __init__(self, in_dim, out_dim, hidden_dim):
         super().__init__()
         self.network = nn.Sequential(
@@ -284,17 +325,20 @@ class FCNN(nn.Module):
 
 def searchsorted(bin_locations, inputs, eps=1e-6):
     bin_locations[..., -1] += eps
-    return torch.sum(
-        inputs[..., None] >= bin_locations,
-        dim=-1
-    ) - 1
+    return torch.sum(inputs[..., None] >= bin_locations, dim=-1) - 1
 
 
-def unconstrained_RQS(inputs, unnormalized_widths, unnormalized_heights,
-                      unnormalized_derivatives, inverse=False,
-                      tail_bound=1., min_bin_width=DEFAULT_MIN_BIN_WIDTH,
-                      min_bin_height=DEFAULT_MIN_BIN_HEIGHT,
-                      min_derivative=DEFAULT_MIN_DERIVATIVE):
+def unconstrained_RQS(
+    inputs,
+    unnormalized_widths,
+    unnormalized_heights,
+    unnormalized_derivatives,
+    inverse=False,
+    tail_bound=1.0,
+    min_bin_width=DEFAULT_MIN_BIN_WIDTH,
+    min_bin_height=DEFAULT_MIN_BIN_HEIGHT,
+    min_derivative=DEFAULT_MIN_DERIVATIVE,
+):
     inside_intvl_mask = (inputs >= -tail_bound) & (inputs <= tail_bound)
     outside_interval_mask = ~inside_intvl_mask
 
@@ -315,33 +359,45 @@ def unconstrained_RQS(inputs, unnormalized_widths, unnormalized_heights,
         unnormalized_heights=unnormalized_heights[inside_intvl_mask, :],
         unnormalized_derivatives=unnormalized_derivatives[inside_intvl_mask, :],
         inverse=inverse,
-        left=-tail_bound, right=tail_bound, bottom=-tail_bound, top=tail_bound,
+        left=-tail_bound,
+        right=tail_bound,
+        bottom=-tail_bound,
+        top=tail_bound,
         min_bin_width=min_bin_width,
         min_bin_height=min_bin_height,
-        min_derivative=min_derivative
+        min_derivative=min_derivative,
     )
     return outputs, logabsdet
 
 
-def RQS(inputs, unnormalized_widths, unnormalized_heights,
-        unnormalized_derivatives, inverse=False, left=0., right=1.,
-        bottom=0., top=1., min_bin_width=DEFAULT_MIN_BIN_WIDTH,
-        min_bin_height=DEFAULT_MIN_BIN_HEIGHT,
-        min_derivative=DEFAULT_MIN_DERIVATIVE):
+def RQS(
+    inputs,
+    unnormalized_widths,
+    unnormalized_heights,
+    unnormalized_derivatives,
+    inverse=False,
+    left=0.0,
+    right=1.0,
+    bottom=0.0,
+    top=1.0,
+    min_bin_width=DEFAULT_MIN_BIN_WIDTH,
+    min_bin_height=DEFAULT_MIN_BIN_HEIGHT,
+    min_derivative=DEFAULT_MIN_DERIVATIVE,
+):
     # if torch.min(inputs) < left or torch.max(inputs) > right:
-        # raise ValueError("Input outside domain")
+    # raise ValueError("Input outside domain")
 
     num_bins = unnormalized_widths.shape[-1]
 
     if min_bin_width * num_bins > 1.0:
-        raise ValueError('Minimal bin width too large for the number of bins')
+        raise ValueError("Minimal bin width too large for the number of bins")
     if min_bin_height * num_bins > 1.0:
-        raise ValueError('Minimal bin height too large for the number of bins')
+        raise ValueError("Minimal bin height too large for the number of bins")
 
     widths = F.softmax(unnormalized_widths, dim=-1)
     widths = min_bin_width + (1 - min_bin_width * num_bins) * widths
     cumwidths = torch.cumsum(widths, dim=-1)
-    cumwidths = F.pad(cumwidths, pad=(1, 0), mode='constant', value=0.0)
+    cumwidths = F.pad(cumwidths, pad=(1, 0), mode="constant", value=0.0)
     cumwidths = (right - left) * cumwidths + left
     cumwidths[..., 0] = left
     cumwidths[..., -1] = right
@@ -352,7 +408,7 @@ def RQS(inputs, unnormalized_widths, unnormalized_heights,
     heights = F.softmax(unnormalized_heights, dim=-1)
     heights = min_bin_height + (1 - min_bin_height * num_bins) * heights
     cumheights = torch.cumsum(heights, dim=-1)
-    cumheights = F.pad(cumheights, pad=(1, 0), mode='constant', value=0.0)
+    cumheights = F.pad(cumheights, pad=(1, 0), mode="constant", value=0.0)
     cumheights = (top - bottom) * cumheights + bottom
     cumheights[..., 0] = bottom
     cumheights[..., -1] = top
@@ -377,13 +433,13 @@ def RQS(inputs, unnormalized_widths, unnormalized_heights,
     input_heights = heights.gather(-1, bin_idx)[..., 0]
 
     if inverse:
-        a = (((inputs - input_cumheights) * (input_derivatives \
-            + input_derivatives_plus_one - 2 * input_delta) \
-            + input_heights * (input_delta - input_derivatives)))
-        b = (input_heights * input_derivatives - (inputs - input_cumheights) \
-            * (input_derivatives + input_derivatives_plus_one \
-            - 2 * input_delta))
-        c = - input_delta * (inputs - input_cumheights)
+        a = (inputs - input_cumheights) * (
+            input_derivatives + input_derivatives_plus_one - 2 * input_delta
+        ) + input_heights * (input_delta - input_derivatives)
+        b = input_heights * input_derivatives - (inputs - input_cumheights) * (
+            input_derivatives + input_derivatives_plus_one - 2 * input_delta
+        )
+        c = -input_delta * (inputs - input_cumheights)
 
         discriminant = b.pow(2) - 4 * a * c
         assert (discriminant >= 0).all()
@@ -392,32 +448,34 @@ def RQS(inputs, unnormalized_widths, unnormalized_heights,
         outputs = root * input_bin_widths + input_cumwidths
 
         theta_one_minus_theta = root * (1 - root)
-        denominator = input_delta \
-                      + ((input_derivatives + input_derivatives_plus_one \
-                      - 2 * input_delta) * theta_one_minus_theta)
-        derivative_numerator = input_delta.pow(2) \
-                               * (input_derivatives_plus_one * root.pow(2) \
-                                + 2 * input_delta * theta_one_minus_theta \
-                                + input_derivatives * (1 - root).pow(2))
+        denominator = input_delta + (
+            (input_derivatives + input_derivatives_plus_one - 2 * input_delta)
+            * theta_one_minus_theta
+        )
+        derivative_numerator = input_delta.pow(2) * (
+            input_derivatives_plus_one * root.pow(2)
+            + 2 * input_delta * theta_one_minus_theta
+            + input_derivatives * (1 - root).pow(2)
+        )
         logabsdet = torch.log(derivative_numerator) - 2 * torch.log(denominator)
         return outputs, -logabsdet
     else:
         theta = (inputs - input_cumwidths) / input_bin_widths
         theta_one_minus_theta = theta * (1 - theta)
 
-        numerator = input_heights * (input_delta * theta.pow(2) \
-                    + input_derivatives * theta_one_minus_theta)
-        denominator = input_delta + ((input_derivatives \
-                      + input_derivatives_plus_one - 2 * input_delta) \
-                      * theta_one_minus_theta)
+        numerator = input_heights * (
+            input_delta * theta.pow(2) + input_derivatives * theta_one_minus_theta
+        )
+        denominator = input_delta + (
+            (input_derivatives + input_derivatives_plus_one - 2 * input_delta)
+            * theta_one_minus_theta
+        )
         outputs = input_cumheights + numerator / denominator
 
-        derivative_numerator = input_delta.pow(2) \
-                               * (input_derivatives_plus_one * theta.pow(2) \
-                                + 2 * input_delta * theta_one_minus_theta \
-                                + input_derivatives * (1 - theta).pow(2))
+        derivative_numerator = input_delta.pow(2) * (
+            input_derivatives_plus_one * theta.pow(2)
+            + 2 * input_delta * theta_one_minus_theta
+            + input_derivatives * (1 - theta).pow(2)
+        )
         logabsdet = torch.log(derivative_numerator) - 2 * torch.log(denominator)
         return outputs, logabsdet
-        
-
-

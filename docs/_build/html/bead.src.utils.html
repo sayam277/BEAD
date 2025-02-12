@@ -1,0 +1,504 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bead.src.utils package &mdash; bead 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="bead.src.trainers package" href="bead.src.trainers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            bead
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">BEAD</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="bead.html">bead package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="bead.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="bead.src.html">bead.src package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="bead.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bead.html#bead-bead-module">bead.bead module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bead.html#module-bead">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">bead</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">BEAD</a></li>
+          <li class="breadcrumb-item"><a href="bead.html">bead package</a></li>
+          <li class="breadcrumb-item"><a href="bead.src.html">bead.src package</a></li>
+      <li class="breadcrumb-item active">bead.src.utils package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/bead.src.utils.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bead-src-utils-package">
+<h1>bead.src.utils package<a class="headerlink" href="#bead-src-utils-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bead.src.utils.conversion">
+<span id="bead-src-utils-conversion-module"></span><h2>bead.src.utils.conversion module<a class="headerlink" href="#module-bead.src.utils.conversion" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.conversion.calculate_jet_properties">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.conversion.</span></span><span class="sig-name descname"><span class="pre">calculate_jet_properties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">constituents</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/conversion.html#calculate_jet_properties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.conversion.calculate_jet_properties" title="Link to this definition"></a></dt>
+<dd><p>Calculate jet pT, eta, and phi from constituent properties.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>constituents</strong> (<em>list</em><em> of </em><em>dicts</em>) – Each dict contains constituent properties:
+{‘pt’: …, ‘eta’: …, ‘phi’: …}</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Jet properties {‘jet_pt’: …, ‘jet_eta’: …, ‘jet_phi’: …}</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.conversion.convert_csv_to_hdf5_npy_parallel">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.conversion.</span></span><span class="sig-name descname"><span class="pre">convert_csv_to_hdf5_npy_parallel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'h5'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/conversion.html#convert_csv_to_hdf5_npy_parallel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.conversion.convert_csv_to_hdf5_npy_parallel" title="Link to this definition"></a></dt>
+<dd><p>Convert a CSV file to HDF5 and .npy files in parallel,
+adding event ID (evt_id) and jet-level properties calculated from constituents.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>csv_file</strong> (<em>str</em>) – Path to the input CSV file.</p></li>
+<li><p><strong>output_prefix</strong> (<em>str</em>) – Prefix for the output files.</p></li>
+<li><p><strong>file_type</strong> (<em>str</em>) – Output file type (‘h5’ or ‘npy’).</p></li>
+<li><p><strong>output_path</strong> (<em>str</em>) – Path to save output files.</p></li>
+<li><p><strong>n_workers</strong> (<em>int</em>) – Number of parallel workers.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – Print progress if True.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.conversion.process_event">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.conversion.</span></span><span class="sig-name descname"><span class="pre">process_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evt_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">row</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/conversion.html#process_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.conversion.process_event" title="Link to this definition"></a></dt>
+<dd><p>Process a single event, calculating jet and constituent data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>evt_id</strong> (<em>int</em>) – Event ID.</p></li>
+<li><p><strong>row</strong> (<em>pandas.Series</em>) – Row from the DataFrame corresponding to the event.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(event_data, jets, constituents) for the event.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="bead-src-utils-data-processing-module">
+<h2>bead.src.utils.data_processing module<a class="headerlink" href="#bead-src-utils-data-processing-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bead.src.utils.diagnostics">
+<span id="bead-src-utils-diagnostics-module"></span><h2>bead.src.utils.diagnostics module<a class="headerlink" href="#module-bead.src.utils.diagnostics" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.diagnostics.c_profile">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.diagnostics.</span></span><span class="sig-name descname"><span class="pre">c_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/diagnostics.html#c_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.diagnostics.c_profile" title="Link to this definition"></a></dt>
+<dd><p>Profile the function func with cProfile.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>func</strong> (<em>callable</em>) – The function to be profiled.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The result of the function <cite>func</cite> execution.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>result</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.diagnostics.dict_to_square_matrix">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.diagnostics.</span></span><span class="sig-name descname"><span class="pre">dict_to_square_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">array</span></span></span><a class="reference internal" href="_modules/bead/src/utils/diagnostics.html#dict_to_square_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.diagnostics.dict_to_square_matrix" title="Link to this definition"></a></dt>
+<dd><p>Function changes an input dictionary into a square np.array. Adds NaNs when the dimension of a dict key is less than of the final square matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input_dict</strong> (<em>dict</em>)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>square_matrix (np.array)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.diagnostics.get_mean_node_activations">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.diagnostics.</span></span><span class="sig-name descname"><span class="pre">get_mean_node_activations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/bead/src/utils/diagnostics.html#get_mean_node_activations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.diagnostics.get_mean_node_activations" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.diagnostics.nap_diagnose">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.diagnostics.</span></span><span class="sig-name descname"><span class="pre">nap_diagnose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bead/src/utils/diagnostics.html#nap_diagnose"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.diagnostics.nap_diagnose" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.diagnostics.plot">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.diagnostics.</span></span><span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bead/src/utils/diagnostics.html#plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.diagnostics.plot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.diagnostics.pytorch_profile">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.diagnostics.</span></span><span class="sig-name descname"><span class="pre">pytorch_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/diagnostics.html#pytorch_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.diagnostics.pytorch_profile" title="Link to this definition"></a></dt>
+<dd><p>This function performs PyTorch profiling of CPU, GPU time and memory
+consumed by the function f execution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>f</strong> (<em>callable</em>) – The function to be profiled.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The result of the function <cite>f</cite> execution.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>result</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="bead-src-utils-ggl-module">
+<h2>bead.src.utils.ggl module<a class="headerlink" href="#bead-src-utils-ggl-module" title="Link to this heading"></a></h2>
+</section>
+<section id="bead-src-utils-helper-module">
+<h2>bead.src.utils.helper module<a class="headerlink" href="#bead-src-utils-helper-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bead.src.utils.loss">
+<span id="bead-src-utils-loss-module"></span><h2>bead.src.utils.loss module<a class="headerlink" href="#module-bead.src.utils.loss" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.loss.accuracy">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">accuracy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#accuracy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.accuracy" title="Link to this definition"></a></dt>
+<dd><p>Computes the accuracy of a PyTorch model on a given dataset.
+:param model: The PyTorch model to evaluate.
+:type model: nn.Module
+:param dataloader: DataLoader object containing the dataset to evaluate on.
+:type dataloader: DataLoader</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The fraction of correctly classified instances in the dataset.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>accuracy_frac (float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.loss.compute_swd">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">compute_swd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latent_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_projections</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proj_dist</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#compute_swd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.compute_swd" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.loss.get_random_projections">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">get_random_projections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proj_dist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latent_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#get_random_projections"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.get_random_projections" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.loss.loss_function_swae">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">loss_function_swae</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reconstructions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latent_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wasserstein_deg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_projections</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection_dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'normal'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#loss_function_swae"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.loss_function_swae" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.loss.mse_loss_emd_l1">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">mse_loss_emd_l1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_children</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reconstructed_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#mse_loss_emd_l1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.mse_loss_emd_l1" title="Link to this definition"></a></dt>
+<dd><p>Computes a sparse loss function consisting of three terms: the Earth Mover’s Distance (EMD) loss between the
+true and reconstructed data, the mean squared error (MSE) loss between the reconstructed and true data, and a
+L1 regularization term on the output of a list of model children.</p>
+<p>Args: model_children (list): List of PyTorch modules representing the model architecture to be regularized.
+true_data (torch.Tensor): The ground truth data, with shape (batch_size, num_features). reconstructed_data (
+torch.Tensor): The reconstructed data, with shape (batch_size, num_features). reg_param (float): The weight of
+the L1 regularization term in the loss function. validate (bool): If True, returns only the EMD loss. If False,
+computes the full loss with the L1 regularization term.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p>loss (torch.Tensor): The full sparse loss function, with shape ().</p></li>
+<li><p>emd_loss (float): The EMD loss between the true and reconstructed data.</p></li>
+<li><p>l1_loss (torch.Tensor): The L1 regularization term on the output of the model children.</p></li>
+</ul>
+<p>If validate is True, returns only the EMD loss as a float.</p>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>If validate is False, returns a tuple with three elements</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.loss.mse_loss_l1">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">mse_loss_l1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_children</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reconstructed_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#mse_loss_l1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.mse_loss_l1" title="Link to this definition"></a></dt>
+<dd><p>Computes a sparse loss function consisting of two terms: the mean squared error (MSE) loss between the
+reconstructed and true data, and a L1 regularization term on the output of a list of model children.</p>
+<p>Args: model_children (list): List of PyTorch modules representing the model architecture to be regularized.
+true_data (torch.Tensor): The ground truth data, with shape (batch_size, num_features). reconstructed_data (
+torch.Tensor): The reconstructed data, with shape (batch_size, num_features). reg_param (float): The weight of
+the L1 regularization term in the loss function. validate (bool): If True, returns only the MSE loss. If False,
+computes the full loss with the L1 regularization term.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p>loss (torch.Tensor): The full sparse loss function, with shape ().</p></li>
+<li><p>mse_loss (float): The MSE loss between the true and reconstructed data.</p></li>
+<li><p>l1_loss (torch.Tensor): The L1 regularization term on the output of the model children.</p></li>
+</ul>
+<p>If validate is True, returns a tuple with three elements:
+- mse_loss (torch.Tensor): The MSE loss between the true and reconstructed data.
+- 0.
+- 0.</p>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>If validate is False, returns a tuple with three elements</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.loss.mse_sum_loss_l1">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">mse_sum_loss_l1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_children</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reconstructed_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#mse_sum_loss_l1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.mse_sum_loss_l1" title="Link to this definition"></a></dt>
+<dd><p>Computes the sum of mean squared error (MSE) loss and L1 regularization loss.
+:param model_children: List of PyTorch modules representing the encoder network.
+:type model_children: list
+:param true_data: Ground truth tensor of shape (batch_size, input_size).
+:type true_data: tensor
+:param reconstructed_data: Reconstructed tensor of shape (batch_size, input_size).
+:type reconstructed_data: tensor
+:param reg_param: Regularization parameter for L1 loss.
+:type reg_param: float
+:param validate: Whether to return only MSE loss or both MSE and L1 losses.
+:type validate: bool</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>loss (tensor): Total loss consisting of MSE loss and L1 regularization loss.</dt><dd><p>mse_sum_loss (tensor): Mean squared error loss.
+l1_loss (tensor): L1 regularization loss.</p>
+</dd>
+<dt>If validate is True:</dt><dd><p>mse_sum_loss (tensor): Mean squared error loss.
+0 (int): Placeholder for MSE loss since it is not calculated during validation.
+0 (int): Placeholder for L1 loss since it is not calculated during validation.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>If validate is False</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="bead-src-utils-normalization-module">
+<h2>bead.src.utils.normalization module<a class="headerlink" href="#bead-src-utils-normalization-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-bead.src.utils.plotting">
+<span id="bead-src-utils-plotting-module"></span><h2>bead.src.utils.plotting module<a class="headerlink" href="#module-bead.src.utils.plotting" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.plotting.get_index_to_cut">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">get_index_to_cut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">column_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cut</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">array</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/plotting.html#get_index_to_cut"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.plotting.get_index_to_cut" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Given an array column index and a threshold, this function returns the index of the</dt><dd><p>entries not passing the threshold.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>column_index</strong> (<em>int</em>) – The index for the column where cuts should be applied</p></li>
+<li><p><strong>cut</strong> (<em>float</em>) – Threshold for which values below will have the whole entry removed</p></li>
+<li><p><strong>array</strong> (<em>np.array</em>) – The full array to be edited</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>returns the index of the rows to be removed</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>_type_</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.plotting.loss_plot">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">loss_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path_to_loss_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/plotting.html#loss_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.plotting.loss_plot" title="Link to this definition"></a></dt>
+<dd><p>This function Plots the loss from the training and saves it</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path_to_loss_data</strong> (<em>string</em>) – Path to file containing loss plot data generated during training</p></li>
+<li><p><strong>output_path</strong> (<em>path</em>) – Directory path to which the loss plot is saved</p></li>
+<li><p><strong>config</strong> (<em>dataclass</em>) – The config class containing attributes set in the config file</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.plotting.plot">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/plotting.html#plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.plotting.plot" title="Link to this definition"></a></dt>
+<dd><p>Runs the appropriate plotting function based on the data dimension 1D or 2D</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_path</strong> (<em>path</em>) – The path to the project directory</p></li>
+<li><p><strong>config</strong> (<em>dataclass</em>) – The config class containing attributes set in the config file</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.plotting.plot_1D">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_1D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/plotting.html#plot_1D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.plotting.plot_1D" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>General plotting for 1D data, for example data from a ‘.csv’ file. This function generates a pdf</dt><dd><p>document where each page contains the before/after performance
+of each column of the 1D data</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_path</strong> (<em>path</em>) – The path to the project directory</p></li>
+<li><p><strong>config</strong> (<em>dataclass</em>) – The config class containing attributes set in the config file</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.plotting.plot_2D">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/plotting.html#plot_2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.plotting.plot_2D" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.plotting.plot_2D_old">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_2D_old</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/plotting.html#plot_2D_old"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.plotting.plot_2D_old" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>General plotting for 2D data, for example 2D arraysfrom computational fluid</dt><dd><p>dynamics or other image like data. This function generates a pdf
+document where each page contains the before/after performance
+of each column of the 1D data</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>project_path</strong> (<em>string</em>) – The path to the project directory</p></li>
+<li><p><strong>config</strong> (<em>dataclass</em>) – The config class containing attributes set in the config file</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="bead.src.utils.plotting.plot_box_and_whisker">
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.plotting.</span></span><span class="sig-name descname"><span class="pre">plot_box_and_whisker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">residual</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pdf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/plotting.html#plot_box_and_whisker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.plotting.plot_box_and_whisker" title="Link to this definition"></a></dt>
+<dd><p>Plots Box and Whisker plots of 1D data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>project_path</strong> (<em>string</em>) – The path to the project directory</p></li>
+<li><p><strong>config</strong> (<em>dataclass</em>) – The config class containing attributes set in the config file</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-bead.src.utils">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-bead.src.utils" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="bead.src.trainers.html" class="btn btn-neutral float-left" title="bead.src.trainers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pratik Jawahar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

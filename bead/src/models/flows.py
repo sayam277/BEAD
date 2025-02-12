@@ -13,7 +13,14 @@ import numpy as np
 import math
 import sys
 
-from ..src.models.layers import FCNN, MaskedConv2d, MaskedLinear, CNN_Flow_Layer, Dilation_Block, unconstrained_RQS
+from src.models.layers import (
+    FCNN,
+    MaskedConv2d,
+    MaskedLinear,
+    CNN_Flow_Layer,
+    Dilation_Block,
+    unconstrained_RQS,
+)
 
 
 class Planar(nn.Module):
@@ -26,7 +33,7 @@ class Planar(nn.Module):
         self.softplus = nn.Softplus()
 
     def der_h(self, x):
-        """ Derivative of tanh """
+        """Derivative of tanh"""
 
         return 1 - self.h(x) ** 2
 
@@ -36,8 +43,8 @@ class Planar(nn.Module):
 
         # reparameterize u such that the flow becomes invertible
         uw = torch.bmm(w, u)
-        m_uw = -1. + self.softplus(uw)
-        w_norm_sq = torch.sum(w ** 2, dim=2, keepdim=True)
+        m_uw = -1.0 + self.softplus(uw)
+        w_norm_sq = torch.sum(w**2, dim=2, keepdim=True)
         u_hat = u + ((m_uw - uw) * w.transpose(2, 1) / w_norm_sq)
 
         # compute flow with u_hat
@@ -66,12 +73,14 @@ class Sylvester(nn.Module):
 
         self.h = nn.Tanh()
 
-        triu_mask = torch.triu(torch.ones(num_ortho_vecs, num_ortho_vecs), diagonal=1).unsqueeze(0)
+        triu_mask = torch.triu(
+            torch.ones(num_ortho_vecs, num_ortho_vecs), diagonal=1
+        ).unsqueeze(0)
         diag_idx = torch.arange(0, num_ortho_vecs).long()
 
-        self.register_buffer('triu_mask', Variable(triu_mask))
+        self.register_buffer("triu_mask", Variable(triu_mask))
         self.triu_mask.requires_grad = False
-        self.register_buffer('diag_idx', diag_idx)
+        self.register_buffer("diag_idx", diag_idx)
 
     def der_h(self, x):
         return self.der_tanh(x)
@@ -102,7 +111,7 @@ class Sylvester(nn.Module):
         # Output log_det_j in shape (batch_size) instead of (batch_size,1)
         diag_j = diag_r1 * diag_r2
         diag_j = self.der_h(r2qzb).squeeze(1) * diag_j
-        diag_j += 1.
+        diag_j += 1.0
         log_diag_j = diag_j.abs().log()
 
         if sum_ldj:
@@ -130,7 +139,7 @@ class TriangularSylvester(nn.Module):
         self.h = nn.Tanh()
 
         diag_idx = torch.arange(0, z_size).long()
-        self.register_buffer('diag_idx', diag_idx)
+        self.register_buffer("diag_idx", diag_idx)
 
     def der_h(self, x):
         return self.der_tanh(x)
@@ -167,7 +176,7 @@ class TriangularSylvester(nn.Module):
         # Output log_det_j in shape (batch_size) instead of (batch_size,1)
         diag_j = diag_r1 * diag_r2
         diag_j = self.der_h(r2qzb).squeeze(1) * diag_j
-        diag_j += 1.
+        diag_j += 1.0
         log_diag_j = diag_j.abs().log()
 
         if sum_ldj:
@@ -184,7 +193,15 @@ class TriangularSylvester(nn.Module):
 
 class IAF(nn.Module):
 
-    def __init__(self, z_size, num_flows=2, num_hidden=0, h_size=50, forget_bias=1., conv2d=False):
+    def __init__(
+        self,
+        z_size,
+        num_flows=2,
+        num_hidden=0,
+        h_size=50,
+        forget_bias=1.0,
+        conv2d=False,
+    ):
         super(IAF, self).__init__()
         self.z_size = z_size
         self.num_flows = num_flows
@@ -204,7 +221,7 @@ class IAF(nn.Module):
 
         # For reordering z after each flow
         flip_idx = torch.arange(self.z_size - 1, -1, -1).long()
-        self.register_buffer('flip_idx', flip_idx)
+        self.register_buffer("flip_idx", flip_idx)
 
         for k in range(num_flows):
             arch_z = [ar_layer(z_size, h_size), self.activation()]
@@ -231,7 +248,7 @@ class IAF(nn.Module):
 
     def forward(self, z, h_context):
 
-        logdets = 0.
+        logdets = 0.0
         for i, flow in enumerate(self.flows):
             if (i + 1) % 2 == 0 and not self.conv2d:
                 # reverse ordering to help mixing
@@ -254,16 +271,19 @@ class CNN_Flow(nn.Module):
         # prepare reversion matrix
         self.usecuda = True
         self.use_revert = use_revert
-        self.R = Variable(torch.from_numpy(np.flip(np.eye(dim), axis=1).copy()).float(), requires_grad=False)
+        self.R = Variable(
+            torch.from_numpy(np.flip(np.eye(dim), axis=1).copy()).float(),
+            requires_grad=False,
+        )
         if self.usecuda:
             self.R = self.R.cuda()
-        
+
         self.layers = nn.ModuleList()
         for i in range(cnn_layers):
 
             block = Dilation_Block(dim, kernel_size, test_mode)
             self.layers.append(block)
-        
+
     def forward(self, x):
         logdetSum = 0
         output = x
@@ -282,7 +302,8 @@ class NSF_AR(nn.Module):
     Neural spline flow, auto-regressive.
     [Durkan et al. 2019]
     """
-    def __init__(self, dim=15, K = 64, B = 3, hidden_dim = 8, base_network = FCNN):
+
+    def __init__(self, dim=15, K=64, B=3, hidden_dim=8, base_network=FCNN):
         super().__init__()
         self.dim = dim
         self.K = K
@@ -294,22 +315,23 @@ class NSF_AR(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
-        init.uniform_(self.init_param, - 1 / 2, 1 / 2)
+        init.uniform_(self.init_param, -1 / 2, 1 / 2)
 
     def forward(self, x):
         z = torch.zeros_like(x)
-        logdets = 0#torch.zeros(z.shape[0])
+        logdets = 0  # torch.zeros(z.shape[0])
         for i in range(self.dim):
             if i == 0:
                 init_param = self.init_param.expand(x.shape[0], 3 * self.K - 1)
-                W, H, D = torch.split(init_param, self.K, dim = 1)
+                W, H, D = torch.split(init_param, self.K, dim=1)
             else:
                 out = self.layers[i - 1](x[:, :i])
-                W, H, D = torch.split(out, self.K, dim = 1)
-            W, H = torch.softmax(W, dim = 1), torch.softmax(H, dim = 1)
+                W, H, D = torch.split(out, self.K, dim=1)
+            W, H = torch.softmax(W, dim=1), torch.softmax(H, dim=1)
             W, H = 2 * self.B * W, 2 * self.B * H
             D = F.softplus(D)
             z[:, i], ld = unconstrained_RQS(
-                x[:, i], W, H, D, inverse=False, tail_bound=self.B)
+                x[:, i], W, H, D, inverse=False, tail_bound=self.B
+            )
             logdets += ld
         return z, logdets

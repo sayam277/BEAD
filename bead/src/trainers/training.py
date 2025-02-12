@@ -23,7 +23,7 @@ from torch.nn import functional as F
 import torch
 from torch.utils.data import DataLoader
 
-from ..src.utils import helper, loss, diagnostics
+from src.utils import helper, loss, diagnostics
 
 
 class EarlyStopping:
@@ -126,7 +126,7 @@ def fit(
     """
     # Extract model parameters
     model_children = list(model.children())
-    
+
     model.train()
 
     running_loss = 0.0
@@ -191,7 +191,7 @@ def validate(config, model, test_dl, reg_param):
 
     with torch.no_grad():
         for idx, inputs in enumerate(tqdm(test_dl, desc="Validating: ")):
-            
+
             out = helper.call_forward(model, inputs)
 
             loss, _, _ = loss.mse_sum_loss_l1(
@@ -218,7 +218,17 @@ def seed_worker(worker_id):
     random.seed(worker_seed)
 
 
-def train(model, events_train, jets_train, constituents_train, events_val, jets_val, constituents_val, output_path, config):
+def train(
+    model,
+    events_train,
+    jets_train,
+    constituents_train,
+    events_val,
+    jets_val,
+    constituents_val,
+    output_path,
+    config,
+):
     """Does the entire training loop by calling the `fit()` and `validate()`. Appart from this, this is the main function where the data is converted
         to the correct type for it to be trained, via `torch.Tensor()`. Furthermore, the batching is also done here, based on `config.batch_size`,
         and it is the `torch.utils.data.DataLoader` doing the splitting.
@@ -243,7 +253,24 @@ def train(model, events_train, jets_train, constituents_train, events_val, jets_
 
     # Get the device and move tensors to the device
     device = helper.get_device()
-    events_train, jets_train, constituents_train, events_val, jets_val, constituents_val = [x.to(device) for x in [events_train, jets_train, constituents_train, events_val, jets_val, constituents_val]]
+    (
+        events_train,
+        jets_train,
+        constituents_train,
+        events_val,
+        jets_val,
+        constituents_val,
+    ) = [
+        x.to(device)
+        for x in [
+            events_train,
+            jets_train,
+            constituents_train,
+            events_val,
+            jets_val,
+            constituents_val,
+        ]
+    ]
     model = model.to(device)
     if verbose:
         print(f"Device used for training: {device}")
@@ -252,7 +279,9 @@ def train(model, events_train, jets_train, constituents_train, events_val, jets_
     # Pushing input data into the torch-DataLoader object and combines into one DataLoader object (a basic wrapper
     # around several DataLoader objects).
     if verbose:
-        print("Loading data into DataLoader and using batch size of ", config.batch_size)
+        print(
+            "Loading data into DataLoader and using batch size of ", config.batch_size
+        )
 
     if config.deterministic_algorithm:
         if config.verbose:
@@ -265,20 +294,48 @@ def train(model, events_train, jets_train, constituents_train, events_val, jets_
         g = torch.Generator()
         g.manual_seed(0)
 
-        train_dl = [DataLoader(ds, batch_size=config.batch_size, shuffle=False, worker_init_fn=seed_worker, generator=g, drop_last=True) for ds in [events_train, jets_train, constituents_train]]
-        valid_dl = [DataLoader(ds, batch_size=config.batch_size, shuffle=False, worker_init_fn=seed_worker, generator=g, drop_last=True) for ds in [events_val, jets_val, constituents_val]]    
+        train_dl = [
+            DataLoader(
+                ds,
+                batch_size=config.batch_size,
+                shuffle=False,
+                worker_init_fn=seed_worker,
+                generator=g,
+                drop_last=True,
+            )
+            for ds in [events_train, jets_train, constituents_train]
+        ]
+        valid_dl = [
+            DataLoader(
+                ds,
+                batch_size=config.batch_size,
+                shuffle=False,
+                worker_init_fn=seed_worker,
+                generator=g,
+                drop_last=True,
+            )
+            for ds in [events_val, jets_val, constituents_val]
+        ]
     else:
-        train_dl = [DataLoader(ds, batch_size=config.batch_size, shuffle=False, drop_last=True) for ds in [events_train, jets_train, constituents_train]]
-        valid_dl = [DataLoader(ds, batch_size=config.batch_size, shuffle=False, drop_last=True) for ds in [events_val, jets_val, constituents_val]]
+        train_dl = [
+            DataLoader(ds, batch_size=config.batch_size, shuffle=False, drop_last=True)
+            for ds in [events_train, jets_train, constituents_train]
+        ]
+        valid_dl = [
+            DataLoader(ds, batch_size=config.batch_size, shuffle=False, drop_last=True)
+            for ds in [events_val, jets_val, constituents_val]
+        ]
     # Unpacking the DataLoader lists
     train_dl_events, train_dl_jets, train_dl_constituents = train_dl
     val_dl_events, val_dl_jets, val_dl_constituents = valid_dl
 
     # Select Optimizer
     try:
-        optimizer = helper.get_optimizer(config.optimizer, model.parameters(), lr=config.lr)
+        optimizer = helper.get_optimizer(
+            config.optimizer, model.parameters(), lr=config.lr
+        )
     except ValueError as e:
-        print (e)
+        print(e)
 
     # Activate early stopping
     if config.early_stopping:
@@ -336,7 +393,7 @@ def train(model, events_train, jets_train, constituents_train, events_val, jets_
         ## Implementation to save models & values after every N config.epochs, where N is stored in 'config.intermittent_saving_patience':
         if config.intermittent_model_saving:
             if epoch % config.intermittent_saving_patience == 0:
-                path = os.path.join(output_path, "models",  f"model_{epoch}.pt")
+                path = os.path.join(output_path, "models", f"model_{epoch}.pt")
                 helper.model_saver(model, path)
 
     end = time.time()

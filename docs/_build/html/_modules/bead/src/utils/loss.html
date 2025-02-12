@@ -1,0 +1,368 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bead.src.utils.loss &mdash; bead 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            bead
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules.html">BEAD</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">bead</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">bead.src.utils.loss</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for bead.src.utils.loss</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2022 Baler Contributors</span>
+
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">wasserstein_distance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">functional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">functional</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span> <span class="k">as</span> <span class="n">dist</span>
+
+
+<div class="viewcode-block" id="loss_function_swae">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.loss_function_swae">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">loss_function_swae</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="p">,</span>
+    <span class="n">z</span><span class="p">,</span>
+    <span class="n">reconstructions</span><span class="p">,</span>
+    <span class="n">latent_dim</span><span class="p">,</span>
+    <span class="n">reg_weight</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">wasserstein_deg</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
+    <span class="n">num_projections</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
+    <span class="n">projection_dist</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">bias_corr</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="o">*</span> <span class="p">(</span><span class="n">batch_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">reg_weight</span> <span class="o">=</span> <span class="n">reg_weight</span> <span class="o">/</span> <span class="n">bias_corr</span>
+
+    <span class="n">mse_sum</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="s2">&quot;sum&quot;</span><span class="p">)</span>
+    <span class="n">mse_loss</span> <span class="o">=</span> <span class="n">mse_sum</span><span class="p">(</span><span class="n">reconstructions</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span>
+    <span class="n">number_of_columns</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">mse_sum_loss</span> <span class="o">=</span> <span class="n">mse_loss</span> <span class="o">/</span> <span class="n">number_of_columns</span>
+    <span class="c1"># recons_loss_l1 = F.l1_loss(reconstructions, inputs)</span>
+    <span class="n">recons_loss_l1</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">swd_loss</span> <span class="o">=</span> <span class="n">compute_swd</span><span class="p">(</span>
+        <span class="n">z</span><span class="p">,</span> <span class="n">wasserstein_deg</span><span class="p">,</span> <span class="n">reg_weight</span><span class="p">,</span> <span class="n">latent_dim</span><span class="p">,</span> <span class="n">num_projections</span><span class="p">,</span> <span class="n">projection_dist</span>
+    <span class="p">)</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">mse_sum_loss</span> <span class="o">+</span> <span class="n">recons_loss_l1</span> <span class="o">+</span> <span class="n">swd_loss</span>
+    <span class="n">SWD</span> <span class="o">=</span> <span class="n">swd_loss</span>
+    <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">mse_sum_loss</span><span class="p">,</span> <span class="n">SWD</span></div>
+
+
+
+<div class="viewcode-block" id="compute_swd">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.compute_swd">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_swd</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">reg_weight</span><span class="p">,</span> <span class="n">latent_dim</span><span class="p">,</span> <span class="n">num_projections</span><span class="p">,</span> <span class="n">proj_dist</span><span class="p">):</span>
+    <span class="n">prior_z</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn_like</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>  <span class="c1"># [N x D]</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">device</span>
+
+    <span class="n">proj_matrix</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">get_random_projections</span><span class="p">(</span><span class="n">proj_dist</span><span class="p">,</span> <span class="n">latent_dim</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">num_projections</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">latent_projections</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">proj_matrix</span><span class="p">)</span>  <span class="c1"># [N x S]</span>
+    <span class="n">prior_projections</span> <span class="o">=</span> <span class="n">prior_z</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">proj_matrix</span><span class="p">)</span>  <span class="c1"># [N x S]</span>
+
+    <span class="c1"># The Wasserstein distance is computed by sorting the two projections</span>
+    <span class="c1"># across the batches and computing their element-wise distance</span>
+    <span class="n">w_dist</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">latent_projections</span><span class="o">.</span><span class="n">t</span><span class="p">(),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">prior_projections</span><span class="o">.</span><span class="n">t</span><span class="p">(),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">w_dist</span> <span class="o">=</span> <span class="n">w_dist</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">reg_weight</span> <span class="o">*</span> <span class="n">w_dist</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="get_random_projections">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.get_random_projections">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_random_projections</span><span class="p">(</span><span class="n">proj_dist</span><span class="p">,</span> <span class="n">latent_dim</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">proj_dist</span> <span class="o">==</span> <span class="s2">&quot;normal&quot;</span><span class="p">:</span>
+        <span class="n">rand_samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">latent_dim</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">proj_dist</span> <span class="o">==</span> <span class="s2">&quot;cauchy&quot;</span><span class="p">:</span>
+        <span class="n">rand_samples</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">dist</span><span class="o">.</span><span class="n">Cauchy</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.0</span><span class="p">]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">]))</span>
+            <span class="o">.</span><span class="n">sample</span><span class="p">((</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">latent_dim</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unknown projection distribution.&quot;</span><span class="p">)</span>
+
+    <span class="n">rand_proj</span> <span class="o">=</span> <span class="n">rand_samples</span> <span class="o">/</span> <span class="n">rand_samples</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">rand_proj</span>  <span class="c1"># [S x D]</span></div>
+
+
+
+<div class="viewcode-block" id="mse_loss_emd_l1">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.mse_loss_emd_l1">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">mse_loss_emd_l1</span><span class="p">(</span><span class="n">model_children</span><span class="p">,</span> <span class="n">true_data</span><span class="p">,</span> <span class="n">reconstructed_data</span><span class="p">,</span> <span class="n">reg_param</span><span class="p">,</span> <span class="n">validate</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes a sparse loss function consisting of three terms: the Earth Mover&#39;s Distance (EMD) loss between the</span>
+<span class="sd">    true and reconstructed data, the mean squared error (MSE) loss between the reconstructed and true data, and a</span>
+<span class="sd">    L1 regularization term on the output of a list of model children.</span>
+<span class="sd">    </span>
+<span class="sd">    Args: model_children (list): List of PyTorch modules representing the model architecture to be regularized.</span>
+<span class="sd">    true_data (torch.Tensor): The ground truth data, with shape (batch_size, num_features). reconstructed_data (</span>
+<span class="sd">    torch.Tensor): The reconstructed data, with shape (batch_size, num_features). reg_param (float): The weight of</span>
+<span class="sd">    the L1 regularization term in the loss function. validate (bool): If True, returns only the EMD loss. If False,</span>
+<span class="sd">    computes the full loss with the L1 regularization term.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        If validate is False, returns a tuple with three elements:</span>
+<span class="sd">        - loss (torch.Tensor): The full sparse loss function, with shape ().</span>
+<span class="sd">        - emd_loss (float): The EMD loss between the true and reconstructed data.</span>
+<span class="sd">        - l1_loss (torch.Tensor): The L1 regularization term on the output of the model children.</span>
+
+<span class="sd">        If validate is True, returns only the EMD loss as a float.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mse</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
+    <span class="n">mse_loss</span> <span class="o">=</span> <span class="n">mse</span><span class="p">(</span><span class="n">reconstructed_data</span><span class="p">,</span> <span class="n">true_data</span><span class="p">)</span>
+    <span class="n">wasserstein_distance_list</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">wasserstein_distance</span><span class="p">(</span>
+            <span class="n">true_data</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()[</span><span class="n">i</span><span class="p">,</span> <span class="p">:],</span> <span class="n">reconstructed_data</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">true_data</span><span class="p">))</span>
+    <span class="p">]</span>
+    <span class="n">emd_loss</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">wasserstein_distance_list</span><span class="p">)</span>
+
+    <span class="n">l1_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">true_data</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">validate</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">model_children</span><span class="p">)):</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">model_children</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">l1_loss</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
+
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">emd_loss</span> <span class="o">+</span> <span class="n">mse_loss</span> <span class="o">+</span> <span class="n">reg_param</span> <span class="o">*</span> <span class="n">l1_loss</span>
+        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">emd_loss</span><span class="p">,</span> <span class="n">l1_loss</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">emd_loss</span></div>
+
+
+
+<div class="viewcode-block" id="mse_loss_l1">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.mse_loss_l1">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">mse_loss_l1</span><span class="p">(</span><span class="n">model_children</span><span class="p">,</span> <span class="n">true_data</span><span class="p">,</span> <span class="n">reconstructed_data</span><span class="p">,</span> <span class="n">reg_param</span><span class="p">,</span> <span class="n">validate</span><span class="p">):</span>
+    <span class="c1"># This function is a modified version of the original function by George Dialektakis found at</span>
+    <span class="c1"># https://github.com/Autoencoders-compression-anomaly/Deep-Autoencoders-Data-Compression-GSoC-2021</span>
+    <span class="c1"># Released under the Apache License 2.0 found at https://www.apache.org/licenses/LICENSE-2.0.txt</span>
+    <span class="c1"># Copyright 2021 George Dialektakis</span>
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes a sparse loss function consisting of two terms: the mean squared error (MSE) loss between the</span>
+<span class="sd">    reconstructed and true data, and a L1 regularization term on the output of a list of model children.</span>
+<span class="sd">    </span>
+<span class="sd">    Args: model_children (list): List of PyTorch modules representing the model architecture to be regularized.</span>
+<span class="sd">    true_data (torch.Tensor): The ground truth data, with shape (batch_size, num_features). reconstructed_data (</span>
+<span class="sd">    torch.Tensor): The reconstructed data, with shape (batch_size, num_features). reg_param (float): The weight of</span>
+<span class="sd">    the L1 regularization term in the loss function. validate (bool): If True, returns only the MSE loss. If False,</span>
+<span class="sd">    computes the full loss with the L1 regularization term.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        If validate is False, returns a tuple with three elements:</span>
+<span class="sd">        - loss (torch.Tensor): The full sparse loss function, with shape ().</span>
+<span class="sd">        - mse_loss (float): The MSE loss between the true and reconstructed data.</span>
+<span class="sd">        - l1_loss (torch.Tensor): The L1 regularization term on the output of the model children.</span>
+
+<span class="sd">        If validate is True, returns a tuple with three elements:</span>
+<span class="sd">        - mse_loss (torch.Tensor): The MSE loss between the true and reconstructed data.</span>
+<span class="sd">        - 0.</span>
+<span class="sd">        - 0.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mse</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
+    <span class="n">mse_loss</span> <span class="o">=</span> <span class="n">mse</span><span class="p">(</span><span class="n">reconstructed_data</span><span class="p">,</span> <span class="n">true_data</span><span class="p">)</span>
+
+    <span class="n">l1_loss</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">true_data</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">validate</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">model_children</span><span class="p">)):</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">functional</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">model_children</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">values</span><span class="p">))</span>
+            <span class="n">l1_loss</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
+
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">mse_loss</span> <span class="o">+</span> <span class="n">reg_param</span> <span class="o">*</span> <span class="n">l1_loss</span>
+        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">mse_loss</span><span class="p">,</span> <span class="n">l1_loss</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">mse_loss</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="mse_sum_loss_l1">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.mse_sum_loss_l1">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">mse_sum_loss_l1</span><span class="p">(</span><span class="n">model_children</span><span class="p">,</span> <span class="n">true_data</span><span class="p">,</span> <span class="n">reconstructed_data</span><span class="p">,</span> <span class="n">reg_param</span><span class="p">,</span> <span class="n">validate</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the sum of mean squared error (MSE) loss and L1 regularization loss.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        model_children (list): List of PyTorch modules representing the encoder network.</span>
+<span class="sd">        true_data (tensor): Ground truth tensor of shape (batch_size, input_size).</span>
+<span class="sd">        reconstructed_data (tensor): Reconstructed tensor of shape (batch_size, input_size).</span>
+<span class="sd">        reg_param (float): Regularization parameter for L1 loss.</span>
+<span class="sd">        validate (bool): Whether to return only MSE loss or both MSE and L1 losses.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        If validate is False:</span>
+<span class="sd">            loss (tensor): Total loss consisting of MSE loss and L1 regularization loss.</span>
+<span class="sd">            mse_sum_loss (tensor): Mean squared error loss.</span>
+<span class="sd">            l1_loss (tensor): L1 regularization loss.</span>
+<span class="sd">        If validate is True:</span>
+<span class="sd">            mse_sum_loss (tensor): Mean squared error loss.</span>
+<span class="sd">            0 (int): Placeholder for MSE loss since it is not calculated during validation.</span>
+<span class="sd">            0 (int): Placeholder for L1 loss since it is not calculated during validation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mse_sum</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="s2">&quot;sum&quot;</span><span class="p">)</span>
+    <span class="n">mse_loss</span> <span class="o">=</span> <span class="n">mse_sum</span><span class="p">(</span><span class="n">reconstructed_data</span><span class="p">,</span> <span class="n">true_data</span><span class="p">)</span>
+    <span class="n">number_of_columns</span> <span class="o">=</span> <span class="n">true_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">mse_sum_loss</span> <span class="o">=</span> <span class="n">mse_loss</span> <span class="o">/</span> <span class="n">number_of_columns</span>
+
+    <span class="n">l1_loss</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">true_data</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">validate</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">model_children</span><span class="p">)):</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">functional</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">model_children</span><span class="p">[</span><span class="n">i</span><span class="p">](</span><span class="n">values</span><span class="p">))</span>
+            <span class="n">l1_loss</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
+
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">mse_sum_loss</span> <span class="o">+</span> <span class="n">reg_param</span> <span class="o">*</span> <span class="n">l1_loss</span>
+        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">mse_sum_loss</span><span class="p">,</span> <span class="n">l1_loss</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">mse_sum_loss</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span></div>
+
+
+
+<span class="c1"># Accuracy function still WIP. Not working properly.</span>
+<span class="c1"># Probably has to do with total_correct counter.</span>
+
+
+<div class="viewcode-block" id="accuracy">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.accuracy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">accuracy</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the accuracy of a PyTorch model on a given dataset.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        model (nn.Module): The PyTorch model to evaluate.</span>
+<span class="sd">        dataloader (DataLoader): DataLoader object containing the dataset to evaluate on.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        accuracy_frac (float): The fraction of correctly classified instances in the dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Accuracy&quot;</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+    <span class="n">total_correct</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">total_instances</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">dataloader</span><span class="p">):</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="n">classifications</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+            <span class="n">correct_pred</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">classifications</span> <span class="o">==</span> <span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+
+            <span class="n">total_correct</span> <span class="o">+=</span> <span class="n">correct_pred</span>
+            <span class="n">total_instances</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="n">accuracy_frac</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">total_correct</span> <span class="o">/</span> <span class="n">total_instances</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">accuracy_frac</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">accuracy_frac</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pratik Jawahar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

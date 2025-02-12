@@ -19,7 +19,7 @@ from math import ceil
 
 import numpy as np
 
-from .src.utils import ggl
+from src.utils import ggl
 
 
 __all__ = (
@@ -58,15 +58,17 @@ def main():
         project_name,
         verbose,
     ) = ggl.get_arguments()
-    
+
     # Define paths dict for the different paths used frequently in the pipeline
     paths = {
         "workspace_path": os.path.join("workspaces", workspace_name),
         "project_path": os.path.join("workspaces", workspace_name, project_name),
         "data_path": os.path.join("workspaces", workspace_name, "data"),
-        "output_path": os.path.join("workspaces", workspace_name, project_name, "output"),
+        "output_path": os.path.join(
+            "workspaces", workspace_name, project_name, "output"
+        ),
     }
-    
+
     # Check what the options flag is set to and override the default if necessary
     if options == "h5" or options == "npy":
         config.file_type = options

@@ -606,18 +606,6 @@ files = [
 ]
 
 [[package]]
-name = "importlib"
-version = "1.0.4"
-description = "Backport of importlib.import_module() from Python 2.7"
-optional = false
-python-versions = "*"
-groups = ["main"]
-markers = "python_version <= \"3.11\" or python_version >= \"3.12\""
-files = [
-    {file = "importlib-1.0.4.zip", hash = "sha256:b6ee7066fea66e35f8d0acee24d98006de1a0a8a94a8ce6efe73a9a23c8d9826"},
-]
-
-[[package]]
 name = "isort"
 version = "6.0.0"
 description = "A Python utility / library to sort Python imports."
@@ -2296,5 +2284,5 @@ files = [
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.10,<3.14"
-content-hash = "cbbb5689ca6c553b398305fa582ad5f03a952a7bda79f559e121851dde786ffe"
+python-versions = ">=3.10"
+content-hash = "13538455822a96421caedca038070f88b0890fc832603d20223f8ad4b64f00be"

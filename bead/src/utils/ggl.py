@@ -18,8 +18,8 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from ..src.utils import conversion, data_processing, helper, plotting, diagnostics
-from ..src.trainers import training
+from src.utils import conversion, data_processing, helper, plotting, diagnostics
+from src.trainers import training
 
 
 def get_arguments():
@@ -32,22 +32,25 @@ def get_arguments():
     parser = argparse.ArgumentParser(
         prog="bead",
         description=(
-            text2art(" BEAD ",font="varsity") +
-            "       /-----\\   /-----\\   /-----\\   /-----\\\n      /       \\ /       \\ /       \\ /       \\\n-----|         /         /         /         |-----\n      \\       / \\       / \\       / \\       /\n       \\-----/   \\-----/   \\-----/   \\-----/\n\n"
-            "\n\n\nBEAD is a deep learning based anomaly detection algorithm for new Physics searches at the LHC.\n\n"
-            "BEAD has five main running modes:\n\n"
-            "\t1. Data handling: Deals with handling file types, conversions between them "
-            "and pre-processing the data to feed as inputs to the DL models.\n\n"
-            "\t2. Training: Train your model to learn implicit representations of your background "
-            "data that may come from multiple sources/generators to get a single, encriched latent representation of it.\n\n"
-            "\t3. Inference: Using a model trained on an enriched background, feed in samples you want "
-            "to detect anomalies in using the '--detect or -d' mode.\n\n"
-            "\t4. Plotting: After running Inference, or Training you can generate plots similar to "
-            "what is shown in the paper. These include performance plots as well as different visualizations of the learned data.\n\n"
-            "\t5. Daignostics: Enabling this mode allows running profilers that measure a host of metrics connected "
-            "to the usage of the compute node you run on to help you optimize the code if needed(using CPU-GPU metrics)."
-        ),
-        epilog="Enjoy!",
+            text2art(" BEAD ", font="varsity")
+            + "       /-----\\   /-----\\   /-----\\   /-----\\\n      /       \\ /       \\ /"
+            "       \\ /       \\\n-----|         /         /         /         |-----\n      \\"
+            "       / \\       / \\       / \\       /\n       \\-----/   \\-----/   \\-----/   \\"
+            "-----/\n\n"),
+        #     "\n\n\nBEAD is a deep learning based anomaly detection algorithm for new Physics searches at the LHC.\n\n"
+        #     "BEAD has five main running modes:\n\n"
+        #     "\t1. Data handling: Deals with handling file types, conversions between them\n "
+        #     "and pre-processing the data to feed as inputs to the DL models.\n\n"
+        #     "\t2. Training: Train your model to learn implicit representations of your background\n "
+        #     "data that may come from multiple sources/generators to get a single, encriched latent representation of it.\n\n"
+        #     "\t3. Inference: Using a model trained on an enriched background, feed in samples you want\n "
+        #     "to detect anomalies in using the '--detect or -d' mode.\n\n"
+        #     "\t4. Plotting: After running Inference, or Training you can generate plots similar to\n "
+        #     "what is shown in the paper. These include performance plots as well as different visualizations of the learned data.\n\n"
+        #     "\t5. Diagnostics: Enabling this mode allows running profilers that measure a host of metrics connected\n "
+        #     "to the usage of the compute node you run on to help you optimize the code if needed(using CPU-GPU metrics).\n\n\n"
+        # ),
+        # epilog="Enjoy!",
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
@@ -55,14 +58,25 @@ def get_arguments():
         "--mode",
         type=str,
         required=True,
-        help="new_project \t creates new workspace and project directories as explained by the '--project' flag and sets default configs\n"
-        "convert_csv \t converts input csv into numpy or hdf5 format as chosen in the configs\n"
-        "prepare_inputs \t runs 'convert_csv' mode if numpy/hdf5 files dont already exist. Then reads the produced files, converts to tensors and applies required data processing methods as required\n"
-        "train \t runs the training mode using hyperparameters specified in the configs. Trains the model on the processed data and saves the model\n"
-        "detect \t runs the inference mode using the trained model. Detects anomalies in the data and saves the results\n"
-        "plot \t runs the plotting mode using the results from the detect or train mode. Generates plots as per the paper and saves them\n"
-        "full_chain \t runs all the modes in sequence. From processing the csv to generating the plots\n"
-        "diagnostics \t runs the diagnostics mode. Generates runtime metrics using profilers",
+        help="new_project \t creates new workspace and project directories\n\t\t"
+        " as explained by the '--project' flag and sets default configs\n\n"
+        
+        "convert_csv \t converts input csv into numpy or hdf5 format as chosen in the configs\n\n"
+        
+        "prepare_inputs \t runs 'convert_csv' mode if numpy/hdf5 files dont already exist.\n\t\t Then reads the produced files,"
+        "converts to tensors\n\t\t and applies required data processing methods as required\n\n"
+        
+        "train \t\t runs the training mode using hyperparameters specified in the configs.\n\t\t "
+        "Trains the model on the processed data and saves the model\n\n"
+        
+        "detect \t\t runs the inference mode using the trained model. Detects anomalies in the data and saves the results\n\n"
+        
+        "plot \t\t runs the plotting mode using the results from the detect or train mode.\n\t\t"
+        " Generates plots as per the paper and saves them\n\n"
+        
+        "full_chain \t runs all the modes in sequence. From processing the csv to generating the plots\n\n"
+        
+        "diagnostics \t runs the diagnostics mode. Generates runtime metrics using profilers\n\n",
     )
     parser.add_argument(
         "-p",
@@ -77,14 +91,14 @@ def get_arguments():
         "When combined with new_project mode:\n"
         "  1. If workspace and project exist, take no action.\n"
         "  2. If workspace exists but project does not, create project in workspace.\n"
-        "  3. If workspace does not exist, create workspace directory and project.",
+        "  3. If workspace does not exist, create workspace directory and project.\n\n",
     )
     parser.add_argument(
         "-o",
         "--options",
         type=str,
         required=False,
-        help="Additional options for convert_csv mode [h5 (default), npy]",
+        help="Additional options for convert_csv mode [h5 (default), npy]\n\n",
     )
     parser.add_argument(
         "-v",
@@ -275,27 +289,31 @@ def convert_csv(paths, config, verbose: bool = False):
         A `ProjectName_OutputPrefix_{data-level}.npy` files which contain the same information as above, split into 3 separate files.
     """
     start = time.time()
-    print("Converting csv to " + config.file_type + "...")    
-    
+    print("Converting csv to " + config.file_type + "...")
+
     # Required paths
     input_path = os.path.join(paths["data_path"], "csv")
     output_path = os.path.join(paths["data_path"], config.file_type)
 
     if not os.path.exists(input_path):
-        print(f"Directory {input_path} does not exist. Check if you have downloaded the input csv files correctly and moved them to this location")
-    
+        print(
+            f"Directory {input_path} does not exist. Check if you have downloaded the input csv files correctly and moved them to this location"
+        )
+
     else:
         csv_files_not_found = True
         # List all files in the folder
         for file_name in os.listdir(input_path):
             # Check if the file is a CSV file
-            if file_name.endswith('.csv'):
+            if file_name.endswith(".csv"):
                 # Construct the full file path
                 csv_file_path = os.path.join(input_path, file_name)
                 # Get the base name of the file (without path) and remove the .csv extension
                 output_prefix = os.path.splitext(file_name)[0]
                 # Call the conversion function
-                conversion.convert_csv_to_hdf5_npy_parallel(csv_file_path, output_prefix, config.file_type, output_path, verbose)
+                conversion.convert_csv_to_hdf5_npy_parallel(
+                    csv_file_path, output_prefix, config.file_type, output_path, verbose
+                )
                 # Set the flag to True since at least one CSV file was found
                 csv_files_not_found = False
 
@@ -304,7 +322,7 @@ def convert_csv(paths, config, verbose: bool = False):
             print(f"Error: No CSV files found in the directory '{input_path}'.")
 
     end = time.time()
-    
+
     print("Finished converting csv to " + config.file_type)
     if verbose:
         print("Conversion took:", f"{(end - start) / 60:.3} minutes")
@@ -332,9 +350,13 @@ def prepare_inputs(paths, config, verbose: bool = False):
     output_path = os.path.join(paths["data_path"], config.file_type, "tensors")
 
     if not os.path.exists(input_path):
-        print(f"Directory {input_path} does not exist. Make sure to run --mode = create_new_project first.")
+        print(
+            f"Directory {input_path} does not exist. Make sure to run --mode = create_new_project first."
+        )
     if not os.listdir(input_path):
-        print(f"Directory {input_path} is empty. Make sure to run --mode = convert_csv first.")
+        print(
+            f"Directory {input_path} is empty. Make sure to run --mode = convert_csv first."
+        )
     else:
         # List all files in the folder
         for file_name in os.listdir(input_path):
@@ -345,8 +367,10 @@ def prepare_inputs(paths, config, verbose: bool = False):
                 # Construct the full file path
                 input_file_path = os.path.join(input_path, file_name)
                 # Call the selection function
-                data_processing.prepare_data(input_file_path, output_path, output_prefix, config, verbose)
-        
+                data_processing.prepare_data(
+                    input_file_path, output_path, output_prefix, config, verbose
+                )
+
     end = time.time()
 
     print("Finished preparing and saving input tensors")
@@ -373,7 +397,9 @@ def run_training(paths, config, verbose: bool = False):
     input_path = os.path.join(paths["data_path"], config.file_type, "tensors")
     keyword = "bkg_train"
     try:
-        events_tensor, jets_tensor, constituents_tensor = helper.load_bkg_tensors(input_path, keyword)
+        events_tensor, jets_tensor, constituents_tensor = helper.load_bkg_tensors(
+            input_path, keyword
+        )
         if verbose:
             print("Data loaded successfully")
             print("Events tensor shape:", events_tensor.shape)
@@ -385,10 +411,15 @@ def run_training(paths, config, verbose: bool = False):
     # Split the data into training and validation sets
     if verbose:
         print("Splitting data into training and validation sets...")
-        print(f"Train:Val split ratio: {config.train_size*100}:{(1-config.train_size)*100}")
+        print(
+            f"Train:Val split ratio: {config.train_size*100}:{(1-config.train_size)*100}"
+        )
     try:
         # Apply the function to each tensor, producing a list of three tuples.
-        splits = [helper.train_val_split(t, config.train_size) for t in (events_tensor, jets_tensor, constituents_tensor)]
+        splits = [
+            helper.train_val_split(t, config.train_size)
+            for t in (events_tensor, jets_tensor, constituents_tensor)
+        ]
     except ValueError as e:
         print(e)
     # Unpack the list of tuples into two transposed tuples.
@@ -398,17 +429,13 @@ def run_training(paths, config, verbose: bool = False):
 
     # Instantiate the model
     if verbose:
-        print(
-            f"Intitalizing Model with Latent Size - {config.latent_space_size}"
-        )
+        print(f"Intitalizing Model with Latent Size - {config.latent_space_size}")
     model_object = helper.model_init(config.model_name, config.model_init)
     if config.model_init == "xavier":
         if verbose:
             print("Model initiralized using Xavier initialization")
 
-
-
-####################################################################################################################################    
+    ####################################################################################################################################
     # Calculate the input shape to initialize the model
     if config.model_name == "pj_ensemble":
         in_shape = None
@@ -420,9 +447,9 @@ def run_training(paths, config, verbose: bool = False):
             in_shape = [1, jets_tensor.shape[1], jets_tensor.shape[2]]
         elif config.input_level == "constituent":
             in_shape = [1, constituents_tensor.shape[1], constituents_tensor.shape[2]]
-####################################################################################################################################
+    ####################################################################################################################################
 
-    model = model_object(in_shape= in_shape, z_dim=config.latent_space_size)
+    model = model_object(in_shape=in_shape, z_dim=config.latent_space_size)
     if verbose:
         print(f"Model architecture:\n{model}")
 
@@ -431,17 +458,18 @@ def run_training(paths, config, verbose: bool = False):
     if verbose:
         print(f"Output path: {output_path}")
 
-    trained_model = training.train(
-        model, *data, output_path, config
-    )
+    trained_model = training.train(model, *data, output_path, config)
 
     if verbose:
         print("Training complete")
 
-
     if config.separate_model_saving:
-        helper.encoder_saver(trained_model, os.path.join(output_path, "models", "encoder.pt"))
-        helper.decoder_saver(trained_model, os.path.join(output_path, "models", "decoder.pt"))
+        helper.encoder_saver(
+            trained_model, os.path.join(output_path, "models", "encoder.pt")
+        )
+        helper.decoder_saver(
+            trained_model, os.path.join(output_path, "models", "decoder.pt")
+        )
 
         if verbose:
             print(
@@ -450,16 +478,14 @@ def run_training(paths, config, verbose: bool = False):
             print(
                 f"Decoder saved to {os.path.join(output_path, 'models', 'decoder.pt')}"
             )
-        
+
     else:
         helper.save_model(
             trained_model, os.path.join(output_path, "models", "model.pt")
         )
     end = time.time()
     if verbose:
-        print(
-            f"Model saved to {os.path.join(output_path, 'models', 'model.pt')}"
-        )
+        print(f"Model saved to {os.path.join(output_path, 'models', 'model.pt')}")
         print("\nThe model has the following structure:")
         print(model.type)
         # print time taken in hours
@@ -571,7 +597,7 @@ def run_diagnostics(project_path, verbose: bool):
         input_path (str): path to the np.array contataining the activations values
         output_path (str): path to store the diagnostics pdf
     """
-    
+
     output_path = os.path.join(project_path, "plotting")
     if verbose:
         print("Performing diagnostics")
