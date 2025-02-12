@@ -10,7 +10,7 @@ from math import ceil
 import gzip
 import time
 
-from tqdm import tqdm
+from tqdm.rich import tqdm
 from art import *
 
 sys.path.append(os.getcwd())
@@ -113,6 +113,7 @@ def get_arguments():
 
     workspace_name = args.project[0]
     project_name = args.project[1]
+    project_path = os.path.join("workspaces", workspace_name, project_name)
     config_path = (
         f"workspaces.{workspace_name}.{project_name}.config.{project_name}_config"
     )
@@ -120,8 +121,15 @@ def get_arguments():
     if args.mode == "new_project":
         config = None
     else:
-        config = Config
-        importlib.import_module(config_path).set_config(config)
+        # Check if proejct path exists
+        if not os.path.exists(project_path):
+            print(
+                f"Project path {project_path} does not exist. Please run --mode=new_project first."
+            )
+            sys.exit()
+        else:
+            config = Config
+            importlib.import_module(config_path).set_config(config)
 
     return (
         config,
@@ -255,7 +263,7 @@ def create_new_project(
 
     if verbose:
         print(f"Creating project {project_name} in workspace {workspace_name}...")
-    for directory in required_directories:
+    for directory in tqdm(required_directories, desc="Creating directories: "):
         if verbose:
             print(f"Creating directory {directory}...")
         os.makedirs(directory, exist_ok=True)
@@ -303,7 +311,7 @@ def convert_csv(paths, config, verbose: bool = False):
     else:
         csv_files_not_found = True
         # List all files in the folder
-        for file_name in os.listdir(input_path):
+        for file_name in tqdm(os.listdir(input_path), desc="Converting files: "):
             # Check if the file is a CSV file
             if file_name.endswith(".csv"):
                 # Construct the full file path
@@ -312,7 +320,7 @@ def convert_csv(paths, config, verbose: bool = False):
                 output_prefix = os.path.splitext(file_name)[0]
                 # Call the conversion function
                 conversion.convert_csv_to_hdf5_npy_parallel(
-                    csv_file_path, output_prefix, config.file_type, output_path, verbose
+                    csv_file=csv_file_path, output_prefix=output_prefix, out_path=output_path, file_type=config.file_type, n_workers=config.parallel_workers ,verbose=verbose
                 )
                 # Set the flag to True since at least one CSV file was found
                 csv_files_not_found = False
@@ -320,6 +328,7 @@ def convert_csv(paths, config, verbose: bool = False):
         # Check if no CSV files were found
         if csv_files_not_found:
             print(f"Error: No CSV files found in the directory '{input_path}'.")
+            sys.exit()
 
     end = time.time()
 
@@ -353,13 +362,10 @@ def prepare_inputs(paths, config, verbose: bool = False):
         print(
             f"Directory {input_path} does not exist. Make sure to run --mode = create_new_project first."
         )
-    if not os.listdir(input_path):
-        print(
-            f"Directory {input_path} is empty. Make sure to run --mode = convert_csv first."
-        )
     else:
+        files_not_found = True
         # List all files in the folder
-        for file_name in os.listdir(input_path):
+        for file_name in tqdm(os.listdir(input_path), desc="Preparing tensors: "):
             # Check if the file is a HDF5 file
             if file_name.endswith(config.file_type):
                 # Get the base name of the file (without path) and remove the .h5 extension
@@ -367,9 +373,16 @@ def prepare_inputs(paths, config, verbose: bool = False):
                 # Construct the full file path
                 input_file_path = os.path.join(input_path, file_name)
                 # Call the selection function
-                data_processing.prepare_data(
-                    input_file_path, output_path, output_prefix, config, verbose
+                data_processing.process_and_save_tensors(
+                    in_path=input_file_path, out_path=output_path, output_prefix=output_prefix, config=config, verbose=verbose
                 )
+                # Set the flag to False since at least one HDF5 file was found
+                files_not_found = False
+
+        # Check if no HDF5 files were found
+        if files_not_found:
+            print(f"Error: No {config.file_type} files found in the directory '{input_path}'.")
+            sys.exit()
 
     end = time.time()
 

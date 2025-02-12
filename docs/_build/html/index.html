@@ -74,6 +74,16 @@
 <h1>bead documentation<a class="headerlink" href="#bead-documentation" title="Link to this heading"></a></h1>
 <p>BEAD is a Python package that uses deep learning based methods for anomaly detection in HEP data for new physics searches.
 BEAD has been designed with modularity in mind, to enable usage of various unsupervised latent variable models for any task.</p>
+<p>BEAD has five main running modes:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Data handling: Deals with handling file types, conversions between them and pre-processing the data to feed as inputs to the DL models.</p></li>
+<li><p>Training: Train your model to learn implicit representations of your background data that may come from multiple sources/generators to get a single, encriched latent representation of it.</p></li>
+<li><p>Inference: Using a model trained on an enriched background, feed in samples you want to detect anomalies in using the ‘–detect or -d’ mode.</p></li>
+<li><p>Plotting: After running Inference, or Training you can generate plots similar towhat is shown in the paper. These include performance plots as well as different visualizations of the learned data.</p></li>
+<li><p>Diagnostics: Enabling this mode allows running profilers that measure a host of metrics connected to the usage of the compute node you run on to help you optimize the code if needed(using CPU-GPU metrics).</p></li>
+</ol>
+</div></blockquote>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This project is under active development.</p>

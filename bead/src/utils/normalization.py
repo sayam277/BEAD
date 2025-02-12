@@ -27,8 +27,9 @@ def normalize_jet_pj_custom(data):
         normalized_data (np.ndarray): Output array of shape (N, 8).
         scalers (dict): Dictionary containing the fitted scalers for each feature.
     """
-    if scalers is None:
-        scalers = {}
+    
+    # Initialize the dictionary to store the fitted scalers.
+    scalers = {}
 
     # 1. event_id, jet_id and b_tagged (columns 0, 1 and 3), unchanged.
     event_id = data[:, 0].reshape(-1, 1).astype(float)
@@ -51,7 +52,7 @@ def normalize_jet_pj_custom(data):
 
     # 6. jet_phi: column 6, use "sin_cos"
     jet_phi = data[:, 6].reshape(-1, 1).astype(float)
-    norm_jet_phi, scalers["jet_phi"] = helper.normalize_data(jet_phi, "sin_cos")
+    norm_jet_phi, scalers["jet_phi"] = helper.normalize_data(jet_phi, "sincos")
     # norm_jet_phi will have 2 columns: sin and cos.
 
     # Concatenate the processed features:
@@ -93,8 +94,9 @@ def normalize_constit_pj_custom(data):
         normalized_data (np.ndarray): Output array of shape (N, 8).
         scalers (dict): Dictionary containing the fitted scalers for each feature.
     """
-    if scalers is None:
-        scalers = {}
+    
+    # Initialize the dictionary to store the fitted scalers.
+    scalers = {}
 
     # 1. event_id, jet_id and constit_id (columns 0 - 3), unchanged.
     event_id = data[:, 0].reshape(-1, 1).astype(float)
@@ -117,7 +119,7 @@ def normalize_constit_pj_custom(data):
     # 6. constit_phi: column 6, use "sin_cos"
     constit_phi = data[:, 6].reshape(-1, 1).astype(float)
     norm_constit_phi, scalers["constit_phi"] = helper.normalize_data(
-        constit_phi, "sin_cos"
+        constit_phi, "sincos"
     )
     # norm_constit_phi will have 2 columns: sin and cos.
 
@@ -126,7 +128,7 @@ def normalize_constit_pj_custom(data):
         [
             event_id,  # unchanged
             jet_id,  # unchanged
-            const_id,  # unchanged
+            constit_id,  # unchanged
             b_tagged,  # unchanged
             norm_constit_pt,  # normalized constit_pt
             norm_constit_eta,  # normalized constit_eta

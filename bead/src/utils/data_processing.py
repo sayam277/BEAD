@@ -4,6 +4,7 @@ import torch
 from concurrent.futures import ProcessPoolExecutor
 from sklearn.preprocessing import LabelEncoder
 from loky import get_reusable_executor
+import pickle
 
 from src.utils import helper, normalization
 
@@ -197,28 +198,28 @@ def parallel_select_top_jets_and_constituents(
 
 
 def process_and_save_tensors(
-    input_path, out_path, output_prefix, config, verbose: bool = False
+    in_path, out_path, output_prefix, config, verbose: bool = False
 ):
     """
     Process the input file, parallelize selections, and save the results as PyTorch tensors.
     """
 
     file_type = config.file_type
-    n_jets = config.n_jets
-    n_constits = config.n_constits
+    n_jets = config.num_jets
+    n_constits = config.num_constits
     n_workers = config.parallel_workers
     norm = config.normalizations
 
     if verbose:
         print(
-            f"Processing {n_jets} jets and {n_constits} constituents from {input_path}..."
+            f"Processing {n_jets} jets and {n_constits} constituents from {in_path}..."
         )
 
     # Load the data
-    events, jets, constituents = load_data(input_path, file_type, verbose)
+    events, jets, constituents = load_data(in_path, file_type, verbose)
     if verbose:
         print(
-            f"Loaded {len(events)} events, {len(jets)} jets, and {len(constituents)} constituents from {input_path}"
+            f"Loaded {len(events)} events, {len(jets)} jets, and {len(constituents)} constituents from {in_path}"
         )
         print(
             f"Events shape: {events.shape}\nJets shape: {jets.shape}\nConstituents shape: {constituents.shape}"
@@ -270,9 +271,9 @@ def process_and_save_tensors(
         print(
             f"Saving tensors to {output_prefix}_events.pt, {output_prefix}_jets.pt and {output_prefix}_constituents.pt..."
         )
-    torch.save(evt_tensor, out_path + f"{output_prefix}_events.pt")
-    torch.save(jet_tensor, out_path + f"{output_prefix}_jets.pt")
-    torch.save(constits_tensor, out_path + f"{output_prefix}_constituents.pt")
+    torch.save(evt_tensor, out_path + f"/{output_prefix}_events.pt")
+    torch.save(jet_tensor, out_path + f"/{output_prefix}_jets.pt")
+    torch.save(constits_tensor, out_path + f"/{output_prefix}_constituents.pt")
 
     # Save normalization scalers as pickle files
     if norm:
@@ -280,8 +281,8 @@ def process_and_save_tensors(
             print(
                 f"Saving normalization scalers to {output_prefix}_jet_scaler.pkl and {output_prefix}_constituent_scaler.pkl..."
             )
-        jet_scaler_path = out_path + f"{output_prefix}_jet_scaler.pkl"
-        constit_scaler_path = out_path + f"{output_prefix}_constituent_scaler.pkl"
+        jet_scaler_path = out_path + "/" + f"{output_prefix}_jet_scaler.pkl"
+        constit_scaler_path = out_path + "/" + f"{output_prefix}_constituent_scaler.pkl"
         with open(jet_scaler_path, "wb") as f:
             pickle.dump(jet_comp_scaler, f)
         with open(constit_scaler_path, "wb") as f:

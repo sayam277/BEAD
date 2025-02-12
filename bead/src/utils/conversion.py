@@ -101,8 +101,8 @@ def process_event(evt_id, row):
 def convert_csv_to_hdf5_npy_parallel(
     csv_file,
     output_prefix,
+    out_path,
     file_type="h5",
-    output_path="",
     n_workers=4,
     verbose: bool = False,
 ):
@@ -114,7 +114,7 @@ def convert_csv_to_hdf5_npy_parallel(
         csv_file (str): Path to the input CSV file.
         output_prefix (str): Prefix for the output files.
         file_type (str): Output file type ('h5' or 'npy').
-        output_path (str): Path to save output files.
+        out_path (str): Path to save output files.
         n_workers (int): Number of parallel workers.
         verbose (bool): Print progress if True.
     """
@@ -149,16 +149,16 @@ def convert_csv_to_hdf5_npy_parallel(
 
     if file_type == "npy":
         # Save to .npy files
-        np.save(output_path + f"{output_prefix}_events.npy", event_data)
-        np.save(output_path + f"{output_prefix}_jets.npy", jet_data)
-        np.save(output_path + f"{output_prefix}_constituents.npy", constituent_data)
+        np.save(out_path + f"/{output_prefix}_events.npy", event_data)
+        np.save(out_path + f"/{output_prefix}_jets.npy", jet_data)
+        np.save(out_path + f"/{output_prefix}_constituents.npy", constituent_data)
 
     if file_type == "h5":
         # Save to HDF5 file
-        with h5py.File(output_path + output_prefix + ".h5", "w") as h5file:
+        with h5py.File(out_path + "/" + output_prefix + ".h5", "w") as h5file:
             h5file.create_dataset("events", data=event_data)
             h5file.create_dataset("jets", data=jet_data)
             h5file.create_dataset("constituents", data=constituent_data)
 
     if verbose:
-        print(f"Data saved to files with prefix {output_prefix} at {output_path}.")
+        print(f"Data saved to files with prefix {output_prefix} at {out_path}/")

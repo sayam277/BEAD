@@ -11,20 +11,15 @@ BEAD has been designed with modularity in mind, to enable usage of various unsup
 
 BEAD has five main running modes:
 
-   1. Data handling: Deals with handling file types, conversions between them
- and pre-processing the data to feed as inputs to the DL models.
+   1. Data handling: Deals with handling file types, conversions between them and pre-processing the data to feed as inputs to the DL models.
 
-   2. Training: Train your model to learn implicit representations of your background
- data that may come from multiple sources/generators to get a single, encriched latent representation of it.
+   2. Training: Train your model to learn implicit representations of your background data that may come from multiple sources/generators to get a single, encriched latent representation of it.
 
-   3. Inference: Using a model trained on an enriched background, feed in samples you want
- to detect anomalies in using the '--detect or -d' mode.
+   3. Inference: Using a model trained on an enriched background, feed in samples you want to detect anomalies in using the '--detect or -d' mode. 
 
-   4. Plotting: After running Inference, or Training you can generate plots similar to
- what is shown in the paper. These include performance plots as well as different visualizations of the learned data.
+   4. Plotting: After running Inference, or Training you can generate plots similar towhat is shown in the paper. These include performance plots as well as different visualizations of the learned data.
 
-   5. Diagnostics: Enabling this mode allows running profilers that measure a host of metrics connected
- to the usage of the compute node you run on to help you optimize the code if needed(using CPU-GPU metrics).
+   5. Diagnostics: Enabling this mode allows running profilers that measure a host of metrics connected to the usage of the compute node you run on to help you optimize the code if needed(using CPU-GPU metrics).
 
 .. note::
 
