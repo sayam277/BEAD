@@ -36,7 +36,8 @@ def get_arguments():
             + "       /-----\\   /-----\\   /-----\\   /-----\\\n      /       \\ /       \\ /"
             "       \\ /       \\\n-----|         /         /         /         |-----\n      \\"
             "       / \\       / \\       / \\       /\n       \\-----/   \\-----/   \\-----/   \\"
-            "-----/\n\n"),
+            "-----/\n\n"
+        ),
         #     "\n\n\nBEAD is a deep learning based anomaly detection algorithm for new Physics searches at the LHC.\n\n"
         #     "BEAD has five main running modes:\n\n"
         #     "\t1. Data handling: Deals with handling file types, conversions between them\n "
@@ -60,22 +61,15 @@ def get_arguments():
         required=True,
         help="new_project \t creates new workspace and project directories\n\t\t"
         " as explained by the '--project' flag and sets default configs\n\n"
-        
         "convert_csv \t converts input csv into numpy or hdf5 format as chosen in the configs\n\n"
-        
         "prepare_inputs \t runs 'convert_csv' mode if numpy/hdf5 files dont already exist.\n\t\t Then reads the produced files,"
         "converts to tensors\n\t\t and applies required data processing methods as required\n\n"
-        
         "train \t\t runs the training mode using hyperparameters specified in the configs.\n\t\t "
         "Trains the model on the processed data and saves the model\n\n"
-        
         "detect \t\t runs the inference mode using the trained model. Detects anomalies in the data and saves the results\n\n"
-        
         "plot \t\t runs the plotting mode using the results from the detect or train mode.\n\t\t"
         " Generates plots as per the paper and saves them\n\n"
-        
         "full_chain \t runs all the modes in sequence. From processing the csv to generating the plots\n\n"
-        
         "diagnostics \t runs the diagnostics mode. Generates runtime metrics using profilers\n\n",
     )
     parser.add_argument(
@@ -320,7 +314,12 @@ def convert_csv(paths, config, verbose: bool = False):
                 output_prefix = os.path.splitext(file_name)[0]
                 # Call the conversion function
                 conversion.convert_csv_to_hdf5_npy_parallel(
-                    csv_file=csv_file_path, output_prefix=output_prefix, out_path=output_path, file_type=config.file_type, n_workers=config.parallel_workers ,verbose=verbose
+                    csv_file=csv_file_path,
+                    output_prefix=output_prefix,
+                    out_path=output_path,
+                    file_type=config.file_type,
+                    n_workers=config.parallel_workers,
+                    verbose=verbose,
                 )
                 # Set the flag to True since at least one CSV file was found
                 csv_files_not_found = False
@@ -374,14 +373,20 @@ def prepare_inputs(paths, config, verbose: bool = False):
                 input_file_path = os.path.join(input_path, file_name)
                 # Call the selection function
                 data_processing.process_and_save_tensors(
-                    in_path=input_file_path, out_path=output_path, output_prefix=output_prefix, config=config, verbose=verbose
+                    in_path=input_file_path,
+                    out_path=output_path,
+                    output_prefix=output_prefix,
+                    config=config,
+                    verbose=verbose,
                 )
                 # Set the flag to False since at least one HDF5 file was found
                 files_not_found = False
 
         # Check if no HDF5 files were found
         if files_not_found:
-            print(f"Error: No {config.file_type} files found in the directory '{input_path}'.")
+            print(
+                f"Error: No {config.file_type} files found in the directory '{input_path}'."
+            )
             sys.exit()
 
     end = time.time()
@@ -410,7 +415,7 @@ def run_training(paths, config, verbose: bool = False):
     input_path = os.path.join(paths["data_path"], config.file_type, "tensors")
     keyword = "bkg_train"
     try:
-        events_tensor, jets_tensor, constituents_tensor = helper.load_bkg_tensors(
+        events_tensor, jets_tensor, constituents_tensor = helper.load_augment_tensors(
             input_path, keyword
         )
         if verbose:

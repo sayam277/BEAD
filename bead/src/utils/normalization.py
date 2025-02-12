@@ -27,7 +27,7 @@ def normalize_jet_pj_custom(data):
         normalized_data (np.ndarray): Output array of shape (N, 8).
         scalers (dict): Dictionary containing the fitted scalers for each feature.
     """
-    
+
     # Initialize the dictionary to store the fitted scalers.
     scalers = {}
 
@@ -94,7 +94,7 @@ def normalize_constit_pj_custom(data):
         normalized_data (np.ndarray): Output array of shape (N, 8).
         scalers (dict): Dictionary containing the fitted scalers for each feature.
     """
-    
+
     # Initialize the dictionary to store the fitted scalers.
     scalers = {}
 

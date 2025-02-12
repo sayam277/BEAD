@@ -355,7 +355,7 @@ def invert_normalize_data(normalized_data, scaler):
     return scaler.inverse_transform(normalized_data)
 
 
-def load_sig_tensors(folder_path, keyword="sig_test"):
+def load_tensors(folder_path, keyword="sig_test"):
     """
     Searches through the specified folder for all '.pt' files containing the given keyword in their names.
     Categorizes these files based on the presence of 'jets', 'events', or 'constituents' in their filenames,
@@ -412,16 +412,21 @@ def load_sig_tensors(folder_path, keyword="sig_test"):
     )
 
 
-def load_bkg_tensors(folder_path, keyword):
+def load_augment_tensors(folder_path, keyword):
     """
     Searches through the specified folder for all '.pt' files whose names contain the specified
     keyword (e.g., 'bkg_train', 'bkg_test', or 'sig_test'). Files are then categorized by whether
     their filename contains one of the three substrings: 'jets', 'events', or 'constituents'.
-    Additionally, each file must contain one of the generator names: 'herwig', 'pythia', or 'sherpa'.
+
+    For 'bkg_train', each file must contain one of the generator names: 'herwig', 'pythia', or 'sherpa'.
     For each file, the tensor is loaded and a new feature is appended along the last dimension:
     - 0 for files containing 'herwig'
     - 1 for files containing 'pythia'
     - 2 for files containing 'sherpa'
+
+    For 'bkg_test' and 'sig_test', the appended new feature is filled with -1, since generator info
+    is not available at test time.
+
     Finally, for each category the resulting tensors are concatenated along axis=0.
 
     Args:
@@ -445,7 +450,7 @@ def load_bkg_tensors(folder_path, keyword):
 
     # Define the categories and generator subcategories.
     categories = ["jets", "events", "constituents"]
-    generators = {"herwig": 0, "pythia": 1, "sherpa": 2}
+    generators = {"herwig": 0, "pythia": 1, "sherpa": 2, "bkg_test": -1, "sig_test": -2}
 
     # Initialize dictionary to store files per category and generator.
     file_categories = {cat: {gen: [] for gen in generators} for cat in categories}
@@ -470,13 +475,14 @@ def load_bkg_tensors(folder_path, keyword):
                 # Note: if a file contains multiple generator substrings (unlikely), it will be added
                 # to all matching generator groups.
 
-    # For each category, ensure that each generator type has at least one file.
-    for cat in categories:
-        for gen in generators:
-            if len(file_categories[cat][gen]) == 0:
-                raise ValueError(
-                    "Required files not found. Please run the --mode convert_csv and prepare inputs before retrying."
-                )
+    # For each category in 'bkg_train', ensure that each generator type has at least one file.
+    if keyword == "bkg_train":
+        for cat in categories:
+            for gen in generators:
+                if len(file_categories[cat][gen]) == 0:
+                    raise ValueError(
+                        "Required files not found. Please run the --mode convert_csv and prepare inputs before retrying."
+                    )
 
     # For each file, load its tensor and append the generator feature.
     def load_and_augment(file_info):
@@ -502,7 +508,7 @@ def load_bkg_tensors(folder_path, keyword):
                 dtype=tensor.dtype,
                 device=tensor.device,
             )
-            augmented = torch.cat([tensor, constant_feature], dim=-2)
+            augmented = torch.cat([tensor, constant_feature], dim=2)
         else:
             raise ValueError(
                 "Tensor from {} has unsupported dimensions: {}".format(

@@ -50,11 +50,14 @@ def process_event(evt_id, row):
         tuple: (event_data, jets, constituents) for the event.
     """
     # Extract event-level variables
-    evt_weight = row.evtwt
-    met = row.met
-    met_phi = row.metphi
-    num_jets = int(row.njets)
+    evt_weight = row[1]
+    met = row[2]
+    met_phi = row[3]
+    num_jets = int(row[4])
     event_data = [evt_id, evt_weight, met, met_phi, num_jets]
+
+    # #print row[4] to debug
+    # print(row[4])
 
     jet_offset = 5  # First 4 columns are event-level variables
     jets = []  # Temporary list to hold jet-level data for this event
@@ -119,10 +122,14 @@ def convert_csv_to_hdf5_npy_parallel(
         verbose (bool): Print progress if True.
     """
     # Read the CSV file
-    data = pd.read_csv(csv_file)
+    data = pd.read_csv(csv_file)#, on_bad_lines='skip')
+    # Remove rows with all NaN values
+    data = data.dropna(how="all")
 
     # Parallel processing of events
     if verbose:
+        # print the file path being parsed
+        print(f"Processing {csv_file}...")
         print(f"Processing {len(data)} events in parallel using {n_workers} workers...")
     event_results = []
     with get_reusable_executor(max_workers=n_workers) as executor:

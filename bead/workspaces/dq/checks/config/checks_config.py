@@ -2,7 +2,7 @@
 # === Configuration options ===
 
 def set_config(c):
-    c.input_path                   = "workspaces/dark/data/test_data/"
+    c.input_path                   = "workspaces/dq/data/checks_data/"
     c.file_type                    = "h5"
     c.parallel_workers             = 4
     c.num_jets                     = 3
