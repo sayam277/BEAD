@@ -192,7 +192,7 @@ def set_config(c):
     c.latent_space_size            = 15
     c.normalizations               = "pj_custom"
     c.invert_normalizations        = False
-    c.train_size                   = 0.95
+    c.train_size                   = 1
     c.model_name                   = "Conv_VAE"
     c.input_level                  = "constituent"
     c.input_features               = "4momentum"
@@ -456,7 +456,7 @@ def run_training(paths, config, verbose: bool = False):
     if verbose:
         print(f"Output path: {output_path}")
 
-    trained_model = training.train(model, *data, output_path, config)
+    trained_model = training.train(model, *data, output_path, config, verbose)
 
     if verbose:
         print("Training complete")
@@ -483,6 +483,7 @@ def run_training(paths, config, verbose: bool = False):
         )
     end = time.time()
     if verbose:
+        # Print model save path
         print(f"Model saved to {os.path.join(output_path, 'models', 'model.pt')}")
         print("\nThe model has the following structure:")
         print(model.type)

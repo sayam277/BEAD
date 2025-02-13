@@ -26,84 +26,6 @@ from torch.utils.data import DataLoader
 from src.utils import helper, loss, diagnostics
 
 
-class EarlyStopping:
-    """
-    Class to perform early stopping during model training.
-    Attributes:
-        patience (int): The number of epochs to wait before stopping the training process if the
-            validation loss doesn't improve.
-        min_delta (float): The minimum difference between the new loss and the previous best loss
-            for the new loss to be considered an improvement.
-        counter (int): Counts the number of times the validation loss hasn't improved.
-        best_loss (float): The best validation loss observed so far.
-        early_stop (bool): Flag that indicates whether early stopping criteria have been met.
-    """
-
-    def __init__(self, patience: int, min_delta: float):
-        self.patience = patience  # Nr of times we allow val. loss to not improve before early stopping
-        self.min_delta = min_delta  # min(new loss - best loss) for new loss to be considered improvement
-        self.counter = 0  # counts nr of times val_loss dosent improve
-        self.best_loss = None
-        self.early_stop = False
-
-    def __call__(self, train_loss):
-        if self.best_loss is None:
-            self.best_loss = train_loss
-
-        elif self.best_loss - train_loss > self.min_delta:
-            self.best_loss = train_loss
-            self.counter = 0  # Resets if val_loss improves
-
-        elif self.best_loss - train_loss < self.min_delta:
-            self.counter += 1
-
-            print(f"Early stopping counter {self.counter} of {self.patience}")
-            if self.counter >= self.patience:
-                print("Early Stopping")
-                self.early_stop = True
-
-
-class LRScheduler:
-    """
-    A learning rate scheduler that adjusts the learning rate of an optimizer based on the training loss.
-    Args:
-        optimizer (torch.optim.Optimizer): The optimizer whose learning rate will be adjusted.
-        patience (int): The number of epochs with no improvement in training loss after which the learning rate
-            will be reduced.
-        min_lr (float, optional): The minimum learning rate that can be reached (default: 1e-6).
-        factor (float, optional): The factor by which the learning rate will be reduced (default: 0.1).
-    Attributes:
-        lr_scheduler (torch.optim.lr_scheduler.ReduceLROnPlateau): The PyTorch learning rate scheduler that
-            actually performs the adjustments.
-    Example usage:
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-        lr_scheduler = LRScheduler(optimizer, patience=3, min_lr=1e-6, factor=0.5)
-        for epoch in range(num_epochs):
-            train_loss = train(model, train_data_loader)
-            lr_scheduler(train_loss)
-            # ...
-    """
-
-    def __init__(self, optimizer, patience, min_lr=1e-6, factor=0.5):
-        self.optimizer = optimizer
-        self.patience = patience
-        self.min_lr = min_lr
-        self.factor = factor
-
-        # Maybe add if statements for selectment of lr schedulers
-        self.lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer,
-            mode="min",
-            patience=self.patience,
-            factor=self.factor,
-            min_lr=self.min_lr,
-            verbose=True,
-        )
-
-    def __call__(self, loss):
-        self.lr_scheduler.step(loss)
-
-
 def fit(
     config,
     model,
@@ -111,22 +33,20 @@ def fit(
     loss,
     reg_param,
     optimizer,
-    latent_dim,
-    n_dimensions,
 ):
     """This function trains the model on the train set. It computes the losses and does the backwards propagation, and updates the optimizer as well.
     Args:
+        config (dataClass): Base class selecting user inputs
         model (modelObject): The model you wish to train
         train_dl (torch.DataLoader): Defines the batched data which the model is trained on
-        model_children (list): List of model parameters
+        loss (lossObject): Defines the loss function used to train the model
         reg_param (float): Determines proportionality constant to balance different components of the loss.
         optimizer (torch.optim): Chooses optimizer for gradient descent.
-        n_dimensions (int): Number of dimensions.
     Returns:
-        list, model object: Training loss and trained model
+        list, model object: Training losses, Epoch_loss and trained model
     """
     # Extract model parameters
-    model_children = list(model.children())
+    parameters = model.parameters()
 
     model.train()
 
@@ -138,14 +58,11 @@ def fit(
 
         # Compute the predicted outputs from the input data
         out = helper.call_forward(model, inputs)
+        recon, mu, logvar = out
 
         # Compute the loss
         losses = loss.calculate(
-            model_children=model_children,
-            true_data=inputs,
-            reconstructed_data=reconstructions,
-            reg_param=reg_param,
-            validate=True,
+            recon=recon, target=inputs, mu=mu, logvar=logvar, parameters=parameters, log_det_jacobian=0
         )
         
         loss, *_ = losses
@@ -159,8 +76,8 @@ def fit(
         running_loss += loss.item()
 
     epoch_loss = running_loss / (idx + 1)
-    print(f"# Finished. Training Loss: {loss:.6f}")
-    return epoch_loss, mse_loss, l1_loss, model
+    print(f"# Training Loss: {epoch_loss:.6f}")
+    return losees, epoch_loss, model
 
 
 def validate(config, model, test_dl, loss, reg_param):
@@ -174,7 +91,7 @@ def validate(config, model, test_dl, loss, reg_param):
         float: Validation loss
     """
     # Extract model parameters
-    model_children = list(model.children())
+    parameters = model.parameters()
 
     model.eval()
 
@@ -184,19 +101,20 @@ def validate(config, model, test_dl, loss, reg_param):
         for idx, inputs in enumerate(tqdm(test_dl, desc="Validating: ")):
 
             out = helper.call_forward(model, inputs)
+            recon, mu, logvar = out
 
-            loss, _, _ = loss.mse_sum_loss_l1(
-                model_children=model_children,
-                true_data=inputs,
-                reconstructed_data=reconstructions,
-                reg_param=reg_param,
-                validate=True,
+            # Compute the loss
+            losses = loss.calculate(
+                recon=recon, target=inputs, mu=mu, logvar=logvar, parameters=parameters, log_det_jacobian=0
             )
+
+            loss, *_ = losses
+
             running_loss += loss.item()
 
     epoch_loss = running_loss / (idx + 1)
-    print(f"# Finished. Validation Loss: {loss:.6f}")
-    return epoch_loss
+    print(f"# Validation Loss: {epoch_loss:.6f}")
+    return losses, epoch_loss
 
 
 def seed_worker(worker_id):
@@ -219,6 +137,7 @@ def train(
     constituents_val,
     output_path,
     config,
+    verbose: bool = False,
 ):
     """Does the entire training loop by calling the `fit()` and `validate()`. Appart from this, this is the main function where the data is converted
         to the correct type for it to be trained, via `torch.Tensor()`. Furthermore, the batching is also done here, based on `config.batch_size`,
@@ -356,6 +275,8 @@ def train(
         )
 
     # Training and Validation of the model
+    train_loss_data = []
+    val_loss_data = []
     train_loss = []
     val_loss = []
     start = time.time()
@@ -370,42 +291,49 @@ def train(
     for epoch in range(config.epochs):
         print(f"Epoch {epoch + 1} / {config.epochs}")
 
-        train_epoch_loss, mse_loss_fit, regularizer_loss_fit, trained_model = fit(
+        train_losses, train_epoch_loss, trained_model = fit(
             config=config,
             model=model,
             train_dl=train_dl,
             loss=loss,
             reg_param=config.reg_param,
             optimizer=optimizer,
-            latent_dim=config.latent_space_size,
-            n_dimensions=config.data_dimension,
         )
         train_loss.append(train_epoch_loss)
+        train_loss_data.append(train_losses)
 
-        if config.train_size:
-            val_epoch_loss = validate(
+        if 1-config.train_size:
+            val_losses, val_epoch_loss = validate(
                 model=trained_model,
                 test_dl=valid_dl,
                 loss=loss,
                 reg_param=config.reg_param,
             )
             val_loss.append(val_epoch_loss)
+            val_loss_data.append(val_losses)
         else:
             val_epoch_loss = train_epoch_loss
+            val_losses = train_losses
             val_loss.append(val_epoch_loss)
+            val_loss_data.append(val_losses)
 
+        # Implementing LR Scheduler
         if config.lr_scheduler:
-            lr_scheduler(val_epoch_loss)
-        if config.early_stopping:
-            early_stopping(val_epoch_loss)
-            if early_stopping.early_stop:
-                break
+            helper.lr_scheduler(val_epoch_loss)
 
         ## Implementation to save models & values after every N config.epochs, where N is stored in 'config.intermittent_saving_patience':
         if config.intermittent_model_saving:
             if epoch % config.intermittent_saving_patience == 0:
                 path = os.path.join(output_path, "models", f"model_{epoch}.pt")
                 helper.model_saver(model, path)
+
+        # Implementing Early Stopping
+        if config.early_stopping:
+            helper.early_stopping(val_epoch_loss)
+            if early_stopping.early_stop:
+                if verbose:
+                    print("Early stopping activated at epoch ", epoch)
+                break
 
     end = time.time()
 
@@ -417,12 +345,13 @@ def train(
 
     if verbose:
         print(f"Training the model took {(end - start) / 60:.3} minutes")
+    # Save loss data
     np.save(
-        os.path.join(project_path, "loss_data.npy"), np.array([train_loss, val_loss])
+        os.path.join(output_path, "results", "epoch_loss_data.npy"), np.array([train_loss, val_loss])
     )
-
-    if config.model_type == "convolutional":
-        final_layer = model.get_final_layer_dims()
-        np.save(os.path.join(project_path, "final_layer.npy"), np.array(final_layer))
+    np.save(os.path.join(output_path, "results", "loss_data.npy"), np.array([train_loss_data, val_loss_data]))
+    if verbose:
+        print("Epoch loss data saved as [train_loss, val_loss] to path: ", os.path.join(output_path, "results", "epoch_loss_data.npy"))
+        print("Loss data saved as [train_losses, val_losses] to path: ", os.path.join(output_path, "results", "loss_data.npy"))
 
     return trained_model

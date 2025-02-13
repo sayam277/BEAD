@@ -737,3 +737,81 @@ def call_forward(model, inputs):
         return result
     else:
         return (result,)
+
+
+class EarlyStopping:
+    """
+    Class to perform early stopping during model training.
+    Attributes:
+        patience (int): The number of epochs to wait before stopping the training process if the
+            validation loss doesn't improve.
+        min_delta (float): The minimum difference between the new loss and the previous best loss
+            for the new loss to be considered an improvement.
+        counter (int): Counts the number of times the validation loss hasn't improved.
+        best_loss (float): The best validation loss observed so far.
+        early_stop (bool): Flag that indicates whether early stopping criteria have been met.
+    """
+
+    def __init__(self, patience: int, min_delta: float):
+        self.patience = patience  # Nr of times we allow val. loss to not improve before early stopping
+        self.min_delta = min_delta  # min(new loss - best loss) for new loss to be considered improvement
+        self.counter = 0  # counts nr of times val_loss dosent improve
+        self.best_loss = None
+        self.early_stop = False
+
+    def __call__(self, train_loss):
+        if self.best_loss is None:
+            self.best_loss = train_loss
+
+        elif self.best_loss - train_loss > self.min_delta:
+            self.best_loss = train_loss
+            self.counter = 0  # Resets if val_loss improves
+
+        elif self.best_loss - train_loss < self.min_delta:
+            self.counter += 1
+
+            print(f"Early stopping counter {self.counter} of {self.patience}")
+            if self.counter >= self.patience:
+                print("Early Stopping")
+                self.early_stop = True
+
+
+class LRScheduler:
+    """
+    A learning rate scheduler that adjusts the learning rate of an optimizer based on the training loss.
+    Args:
+        optimizer (torch.optim.Optimizer): The optimizer whose learning rate will be adjusted.
+        patience (int): The number of epochs with no improvement in training loss after which the learning rate
+            will be reduced.
+        min_lr (float, optional): The minimum learning rate that can be reached (default: 1e-6).
+        factor (float, optional): The factor by which the learning rate will be reduced (default: 0.1).
+    Attributes:
+        lr_scheduler (torch.optim.lr_scheduler.ReduceLROnPlateau): The PyTorch learning rate scheduler that
+            actually performs the adjustments.
+    Example usage:
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+        lr_scheduler = LRScheduler(optimizer, patience=3, min_lr=1e-6, factor=0.5)
+        for epoch in range(num_epochs):
+            train_loss = train(model, train_data_loader)
+            lr_scheduler(train_loss)
+            # ...
+    """
+
+    def __init__(self, optimizer, patience, min_lr=1e-6, factor=0.5):
+        self.optimizer = optimizer
+        self.patience = patience
+        self.min_lr = min_lr
+        self.factor = factor
+
+        # Maybe add if statements for selectment of lr schedulers
+        self.lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer,
+            mode="min",
+            patience=self.patience,
+            factor=self.factor,
+            min_lr=self.min_lr,
+            verbose=True,
+        )
+
+    def __call__(self, loss):
+        self.lr_scheduler.step(loss)
