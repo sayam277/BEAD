@@ -108,6 +108,7 @@ def fit(
     config,
     model,
     train_dl,
+    loss,
     reg_param,
     optimizer,
     latent_dim,
@@ -130,35 +131,25 @@ def fit(
     model.train()
 
     running_loss = 0.0
-    device = helper.get_device()
 
     for idx, inputs in enumerate(tqdm(train_dl, desc="Training: ")):
-        inputs = inputs.to(device)
-
         # Set the gradients to zero
         optimizer.zero_grad()
 
         # Compute the predicted outputs from the input data
         out = helper.call_forward(model, inputs)
 
-        if (
-            hasattr(config, "custom_loss_function")
-            and config.custom_loss_function == "loss_function_swae"
-        ):
-            z = model.encode(inputs)
-            loss, mse_loss, l1_loss = loss.loss_function_swae(
-                inputs, z, reconstructions, latent_dim
-            )
-        else:
-            # Compute how far off the prediction is
-            loss, mse_loss, l1_loss = loss.mse_sum_loss_l1(
-                model_children=model_children,
-                true_data=inputs,
-                reconstructed_data=reconstructions,
-                reg_param=reg_param,
-                validate=True,
-            )
-
+        # Compute the loss
+        losses = loss.calculate(
+            model_children=model_children,
+            true_data=inputs,
+            reconstructed_data=reconstructions,
+            reg_param=reg_param,
+            validate=True,
+        )
+        
+        loss, *_ = losses
+        
         # Compute the loss-gradient with
         loss.backward()
 
@@ -172,7 +163,7 @@ def fit(
     return epoch_loss, mse_loss, l1_loss, model
 
 
-def validate(config, model, test_dl, reg_param):
+def validate(config, model, test_dl, loss, reg_param):
     """Function used to validate the training. Not necessary for doing compression, but gives a good indication of wether the model selected is a good fit or not.
     Args:
         model (modelObject): Defines the model one wants to validate. The model used here is passed directly from `fit()`.
@@ -329,22 +320,37 @@ def train(
     train_dl_events, train_dl_jets, train_dl_constituents = train_dl
     val_dl_events, val_dl_jets, val_dl_constituents = valid_dl
 
+    # Select Loss Function
+    try:
+        loss_object = helper.get_loss(config.loss_function)
+        loss = loss_object(config=config)
+        if verbose:
+            print(f"Loss Function: {config.loss_function}")
+    except ValueError as e:
+        print(e)
+
     # Select Optimizer
     try:
         optimizer = helper.get_optimizer(
             config.optimizer, model.parameters(), lr=config.lr
         )
+        if verbose:
+            print(f"Optimizer: {config.optimizer}")
     except ValueError as e:
         print(e)
 
     # Activate early stopping
     if config.early_stopping:
+        if verbose:
+            print("Early stopping is activated with patience of ", config.early_stopping_patience)
         early_stopping = EarlyStopping(
             patience=config.early_stopping_patience, min_delta=config.min_delta
         )  # Changes to patience & min_delta can be made in configs
 
     # Activate LR Scheduler
     if config.lr_scheduler:
+        if verbose:
+            print("Learning rate scheduler is activated with patience of ", config.lr_scheduler_patience)
         lr_scheduler = LRScheduler(
             optimizer=optimizer, patience=config.lr_scheduler_patience
         )
@@ -358,6 +364,9 @@ def train(
     if config.activation_extraction:
         hooks = model.store_hooks()
 
+    if verbose:
+        print(f"Beginning training for {config.epochs} epochs")
+
     for epoch in range(config.epochs):
         print(f"Epoch {epoch + 1} / {config.epochs}")
 
@@ -365,6 +374,7 @@ def train(
             config=config,
             model=model,
             train_dl=train_dl,
+            loss=loss,
             reg_param=config.reg_param,
             optimizer=optimizer,
             latent_dim=config.latent_space_size,
@@ -376,6 +386,7 @@ def train(
             val_epoch_loss = validate(
                 model=trained_model,
                 test_dl=valid_dl,
+                loss=loss,
                 reg_param=config.reg_param,
             )
             val_loss.append(val_epoch_loss)

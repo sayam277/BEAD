@@ -18,6 +18,7 @@ from sklearn.preprocessing import (
 from sklearn.base import BaseEstimator, TransformerMixin
 
 from src.models import models
+from src.utils import loss
 
 
 def get_device():
@@ -138,6 +139,27 @@ def model_init(model_name: str, init: str = None):
         model_object.apply(xavier_init_weights)
 
     return model_object
+
+
+def get_loss(loss_function: str):
+    """Returns the loss_object based on the string provided.
+
+    Args:
+        loss_function (str): The loss function you wish to use. Options include:
+            - 'mse': Mean Squared Error
+            - 'bce': Binary Cross Entropy
+            - 'mae': Mean Absolute Error
+            - 'huber': Huber Loss
+            - 'l1': L1 Loss
+            - 'l2': L2 Loss
+            - 'smoothl1': Smooth L1 Loss
+
+    Returns:
+        class: The loss function object
+    """
+    loss_object = getattr(loss, loss_function)
+
+    return loss_object
 
 
 def load_model(model_object, model_path: str, n_features: int, z_dim: int):
@@ -532,6 +554,55 @@ def load_augment_tensors(folder_path, keyword):
         concatenated[cat] = torch.cat(cat_tensors, dim=0)
 
     return concatenated["events"], concatenated["jets"], concatenated["constituents"]
+
+
+def select_features(jets_tensor, constituents_tensor, input_features):
+    """
+    Process the jets_tensor and constituents_tensor based on the input_features flag.
+    
+    Parameters:
+        jets_tensor (torch.Tensor): Tensor with features
+            [evt_id, jet_id, num_constituents, b_tagged, jet_pt, jet_eta, jet_phi_sin, jet_phi_cos, generator_id]
+        constituents_tensor (torch.Tensor): Tensor with features
+            [evt_id, jet_id, constit_id, b_tagged, constit_pt, constit_eta, constit_phi_sin, constit_phi_cos, generator_id]
+        input_features (str): The flag to determine which features to select.
+            Options:
+            - 'all': return tensors as is.
+            - '4momentum': select [pt, eta, phi_sin, phi_cos, generator_id] for both.
+            - '4momentum_btag': select [b_tagged, pt, eta, phi_sin, phi_cos, generator_id] for both.
+            - 'pj_custom': select everything except [evt_id, jet_id] for jets and except [evt_id, jet_id, constit_id] for constituents.
+    
+    Returns:
+        tuple: Processed jets_tensor and constituents_tensor.
+    """
+    
+    if input_features == 'all':
+        # Return tensors unchanged.
+        return jets_tensor, constituents_tensor
+
+    elif input_features == '4momentum':
+        # For jets: [jet_pt, jet_eta, jet_phi_sin, jet_phi_cos, generator_id] -> indices [4, 5, 6, 7, 8]
+        jets_out = jets_tensor[:, 4:]
+        # For constituents: [constit_pt, constit_eta, constit_phi_sin, constit_phi_cos, generator_id] -> indices [4, 5, 6, 7, 8]
+        constituents_out = constituents_tensor[:, 4:]
+        return jets_out, constituents_out
+
+    elif input_features == '4momentum_btag':
+        # For jets: [b_tagged, jet_pt, jet_eta, jet_phi_sin, jet_phi_cos, generator_id] -> indices [3, 4, 5, 6, 7, 8]
+        jets_out = jets_tensor[:, 3:]
+        # For constituents: [b_tagged, constit_pt, constit_eta, constit_phi_sin, constit_phi_cos, generator_id] -> indices [3, 4, 5, 6, 7, 8]
+        constituents_out = constituents_tensor[:, 3:]
+        return jets_out, constituents_out
+
+    elif input_features == 'pj_custom':
+        # For jets: exclude [evt_id, jet_id] -> remove indices [0, 1]
+        jets_out = jets_tensor[:, 2:]  # returns indices 2 to end
+        # For constituents: exclude [evt_id, jet_id, constit_id] -> remove indices [0, 1, 2]
+        constituents_out = constituents_tensor[:, 3:]  # returns indices 3 to end
+        return jets_out, constituents_out
+
+    else:
+        raise ValueError("Invalid input_features flag provided.")
 
 
 def train_val_split(tensor, train_ratio):

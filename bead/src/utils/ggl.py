@@ -157,6 +157,7 @@ class Config:
     min_delta: int
     model_name: str
     input_level: str
+    input_features: str
     model_init: str
     loss_function: str
     reg_param: float
@@ -194,6 +195,7 @@ def set_config(c):
     c.train_size                   = 0.95
     c.model_name                   = "Conv_VAE"
     c.input_level                  = "constituent"
+    c.input_features               = "4momentum"
     c.model_init                   = "xavier"
     c.loss_function                = "MSE"
     c.optimizer                    = "adamw"
@@ -411,63 +413,41 @@ def run_training(paths, config, verbose: bool = False):
         NameError: Baler currently only supports 1D (e.g. HEP) or 2D (e.g. CFD) data as inputs.
     """
     start = time.time()
-    # Load data from files whose names start with 'bkg'
-    input_path = os.path.join(paths["data_path"], config.file_type, "tensors")
-    keyword = "bkg_train"
-    try:
-        events_tensor, jets_tensor, constituents_tensor = helper.load_augment_tensors(
-            input_path, keyword
-        )
-        if verbose:
-            print("Data loaded successfully")
-            print("Events tensor shape:", events_tensor.shape)
-            print("Jets tensor shape:", jets_tensor.shape)
-            print("Constituents tensor shape:", constituents_tensor.shape)
-    except ValueError as e:
-        print(e)
 
-    # Split the data into training and validation sets
-    if verbose:
-        print("Splitting data into training and validation sets...")
-        print(
-            f"Train:Val split ratio: {config.train_size*100}:{(1-config.train_size)*100}"
-        )
-    try:
-        # Apply the function to each tensor, producing a list of three tuples.
-        splits = [
-            helper.train_val_split(t, config.train_size)
-            for t in (events_tensor, jets_tensor, constituents_tensor)
-        ]
-    except ValueError as e:
-        print(e)
-    # Unpack the list of tuples into two transposed tuples.
-    trains, vals = zip(*splits)
-    # Pack into a single tuple
-    data = trains + vals
+    keyword = 'bkg_train'
+    
+    # Preprocess the data for training
+    data = data_processing.preproc_inputs(paths, config, keyword, verbose)
+    events_train, jets_train, constituents_train, events_val, jets_val, constituents_val = data
 
     # Instantiate the model
     if verbose:
         print(f"Intitalizing Model with Latent Size - {config.latent_space_size}")
     model_object = helper.model_init(config.model_name, config.model_init)
-    if config.model_init == "xavier":
-        if verbose:
-            print("Model initiralized using Xavier initialization")
+    if verbose:
+        if config.model_init == "xavier":
+            print("Model initialized using Xavier initialization")
+        else:
+            print("Model initialized using default PyTorch initialization")
 
-    ####################################################################################################################################
-    # Calculate the input shape to initialize the model
+    # Calculate the input shapes to initialize the model
     if config.model_name == "pj_ensemble":
-        in_shape = None
+        in_shape_e = [config.batch_size, events_train.shape[1]]
+        in_shape_j = [config.batch_size, jets_train.shape[1], jets_train.shape[2]]
+        in_shape_c = [config.batch_size, constituents_train.shape[1], constituents_train.shape[2]]
 
     else:
         if config.input_level == "event":
-            in_shape = [1, events_tensor.shape[1]]
+            in_shape = [config.batch_size, events_train.shape[1]]
         elif config.input_level == "jet":
-            in_shape = [1, jets_tensor.shape[1], jets_tensor.shape[2]]
+            in_shape = [config.batch_size, jets_train.shape[1], jets_train.shape[2]]
         elif config.input_level == "constituent":
-            in_shape = [1, constituents_tensor.shape[1], constituents_tensor.shape[2]]
-    ####################################################################################################################################
+            in_shape = [config.batch_size, constituents_train.shape[1], constituents_train.shape[2]]
 
-    model = model_object(in_shape=in_shape, z_dim=config.latent_space_size)
+    if config.model_name == "pj_ensemble":
+        model = model_object(in_shape_e=in_shape_e, in_shape_j=in_shape_j, in_shape_c=in_shape_c, z_dim=config.latent_space_size)
+    else:
+        model = model_object(in_shape=in_shape, z_dim=config.latent_space_size)
     if verbose:
         print(f"Model architecture:\n{model}")
 

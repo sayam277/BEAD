@@ -296,3 +296,54 @@ def process_and_save_tensors(
             print(
                 f"Normalization scalers saved to {output_prefix}_jet_scaler.pkl and {output_prefix}_constituent_scaler.pkl"
             )
+
+
+def preproc_inputs(paths, config, keyword, verbose: bool = False):
+    # Load data from files whose names start with 'bkg'
+    input_path = os.path.join(paths["data_path"], config.file_type, "tensors")
+
+    try:
+        events_tensor, jets_tensor, constituents_tensor = helper.load_augment_tensors(
+            input_path, keyword
+        )
+        if verbose:
+            print("Data loaded successfully")
+            print("Events tensor shape:", events_tensor.shape)
+            print("Jets tensor shape:", jets_tensor.shape)
+            print("Constituents tensor shape:", constituents_tensor.shape)
+    except ValueError as e:
+        print(e)
+
+    # Reshape the data as per configs.input_features
+    try:
+        jets_tensor, constituents_tensor = helper.select_features(
+            jets_tensor, constituents_tensor, config.input_features
+        )
+        if verbose:
+            print("Data reshaped successfully")
+            print("Events tensor shape:", events_tensor.shape)
+            print("Jets tensor shape:", jets_tensor.shape)
+            print("Constituents tensor shape:", constituents_tensor.shape)
+    except ValueError as e:
+        print(e)
+
+    # Split the data into training and validation sets
+    if verbose:
+        print("Splitting data into training and validation sets...")
+        print(
+            f"Train:Val split ratio: {config.train_size*100}:{(1-config.train_size)*100}"
+        )
+    try:
+        # Apply the function to each tensor, producing a list of three tuples.
+        splits = [
+            helper.train_val_split(t, config.train_size)
+            for t in (events_tensor, jets_tensor, constituents_tensor)
+        ]
+    except ValueError as e:
+        print(e)
+    # Unpack the list of tuples into two transposed tuples.
+    trains, vals = zip(*splits)
+    # Repack into a single tuple
+    data = trains + vals
+
+    return data
