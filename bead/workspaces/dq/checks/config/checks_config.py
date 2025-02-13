@@ -11,14 +11,15 @@ def set_config(c):
     c.normalizations               = "pj_custom"
     c.invert_normalizations        = False
     c.train_size                   = 0.95
-    c.model_name                   = "Conv_VAE"
+    c.model_name                   = "NSF_AR_VAE"
     c.input_level                  = "constituent"
+    c.input_features               = "4momentum"
     c.model_init                   = "xavier"
-    c.loss_function                = "MSE"
+    c.loss_function                = "VAEFlowLoss"
     c.optimizer                    = "adamw"
-    c.epochs                       = 5
+    c.epochs                       = 2
     c.lr                           = 0.001
-    c.batch_size                   = 512
+    c.batch_size                   = 2
     c.early_stopping               = True
     c.lr_scheduler                 = True
 

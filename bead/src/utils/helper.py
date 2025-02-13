@@ -113,7 +113,7 @@ def decoder_saver(model, model_path: str) -> None:
     torch.save(model.decoder.state_dict(), model_path)
 
 
-def model_init(model_name: str, init: str = None):
+def model_init(in_shape, config):
     """Initializing the models attributes to a model_object variable.
 
     Args:
@@ -133,12 +133,19 @@ def model_init(model_name: str, init: str = None):
             if m.bias is not None:
                 nn.init.zeros_(m.bias)
 
-    model_object = getattr(models, model_name)
+    model_object = getattr(models, config.model_name)
+    print(in_shape)
 
-    if init == "xavier":
-        model_object.apply(xavier_init_weights)
+    if config.model_name == "pj_custom":
+        model = model_object(*in_shape, z_dim=config.latent_space_size)
+    
+    else:
+        model = model_object(in_shape, z_dim=config.latent_space_size)
+    
+    if config.model_init == "xavier":
+        model.apply(xavier_init_weights)
 
-    return model_object
+    return model
 
 
 def get_loss(loss_function: str):
@@ -472,7 +479,8 @@ def load_augment_tensors(folder_path, keyword):
 
     # Define the categories and generator subcategories.
     categories = ["jets", "events", "constituents"]
-    generators = {"herwig": 0, "pythia": 1, "sherpa": 2, "bkg_test": -1, "sig_test": -2}
+    generators = {"herwig": 0, "pythia": 1, "sherpa": 2}
+    labels = {"bkg_test": -1, "sig_test": -2}
 
     # Initialize dictionary to store files per category and generator.
     file_categories = {cat: {gen: [] for gen in generators} for cat in categories}
@@ -670,7 +678,7 @@ def get_optimizer(optimizer_name, parameters, lr):
     if opt == "adam":
         return torch.optim.Adam(
             parameters,
-            lr=config.lr,
+            lr=lr,
             betas=(0.9, 0.999),  # Default values
             eps=1e-8,
             weight_decay=0,  # Set to a small value like 1e-5 if regularization is needed
@@ -678,7 +686,7 @@ def get_optimizer(optimizer_name, parameters, lr):
     elif opt == "adamw":
         return torch.optim.AdamW(
             parameters,
-            lr=config.lr,
+            lr=lr,
             betas=(0.9, 0.999),
             eps=1e-8,
             weight_decay=1e-2,  # L2 regularization
@@ -686,7 +694,7 @@ def get_optimizer(optimizer_name, parameters, lr):
     elif opt == "rmsprop":
         return torch.optim.RMSprop(
             parameters,
-            lr=config.lr,
+            lr=lr,
             alpha=0.99,  # Smoothing constant
             eps=1e-8,
             weight_decay=1e-2,  # L2 regularization
@@ -695,19 +703,19 @@ def get_optimizer(optimizer_name, parameters, lr):
     elif opt == "sgd":
         return torch.optim.SGD(
             parameters,
-            lr=config.lr,
+            lr=lr,
             momentum=0.9,  # Momentum term
             weight_decay=0,  # Set to a small value like 1e-5 if regularization is needed
             nesterov=True,  # Set to True if Nesterov momentum is desired
         )
     elif opt == "radam":
         return torch.optim.RAdam(
-            parameters, lr=config.lr, betas=(0.9, 0.999), eps=1e-8, weight_decay=0
+            parameters, lr=lr, betas=(0.9, 0.999), eps=1e-8, weight_decay=0
         )
     elif opt == "adagrad":
         return torch.optim.Adagrad(
             parameters,
-            lr=config.lr,
+            lr=lr,
             lr_decay=0,  # Learning rate decay over each update
             weight_decay=0,
             initial_accumulator_value=0,  # Starting value for the accumulators
@@ -810,7 +818,6 @@ class LRScheduler:
             patience=self.patience,
             factor=self.factor,
             min_lr=self.min_lr,
-            verbose=True,
         )
 
     def __call__(self, loss):

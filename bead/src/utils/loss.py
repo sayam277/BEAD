@@ -21,7 +21,7 @@ from torch.nn import functional as F
 from torch import distributions as dist
 
 
-class BaseLoss:
+class BaseLoss():
     """
     Base class for all loss functions.
     Each subclass must implement the calculate() method.
@@ -202,12 +202,12 @@ class VAELoss(BaseLoss):
         self.loss_type = "mse"
         self.reduction = "mean"
         self.kl_loss_fn = KLDivergenceLoss(config)
-        self.kl_weight = self.config.reg_param
+        self.kl_weight = torch.tensor(self.config.reg_param, requires_grad=True)
 
     def calculate(self, recon, target, mu, logvar, parameters, log_det_jacobian=0):
         recon_loss = self.recon_loss_fn.calculate(recon, target, self.loss_type, self.reduction)
         kl_loss = self.kl_loss_fn.calculate(mu, logvar)
-        loss = recon_loss + self.kl_weight * kl_loss
+        loss = recon_loss[0] + self.kl_weight * kl_loss[0]
         return loss, recon_loss, kl_loss
 
 
@@ -231,14 +231,14 @@ class VAEFlowLoss(BaseLoss):
         self.loss_type = "mse"
         self.reduction = "mean"
         self.kl_loss_fn = KLDivergenceLoss(config)
-        self.kl_weight = self.config.reg_param
-        self.flow_weight = self.config.reg_param
+        self.kl_weight = torch.tensor(self.config.reg_param, requires_grad=True)
+        self.flow_weight = torch.tensor(self.config.reg_param, requires_grad=True)
 
     def calculate(self, recon, target, mu, logvar, parameters, log_det_jacobian=0):
         recon_loss = self.recon_loss_fn.calculate(recon, target, self.loss_type, self.reduction)
         kl_loss = self.kl_loss_fn.calculate(mu, logvar)
         # Subtract the log-det term (maximizing likelihood).
-        total_loss = recon_loss + self.kl_weight * kl_loss - self.flow_weight * log_det_jacobian
+        total_loss = recon_loss[0] + self.kl_weight * kl_loss[0] - self.flow_weight * log_det_jacobian
         return total_loss, recon_loss, kl_loss
 
 

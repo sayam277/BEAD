@@ -179,13 +179,13 @@ class Conv_AE(nn.Module):
 
         # Conv Layers
         self.q_z_conv = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=(3, 4), stride=(1), padding=(0)),
+            nn.Conv2d(1, 32, kernel_size=(3, 4), stride=(1,), padding=(0)),
             nn.BatchNorm2d(32),
             nn.LeakyReLU(),
-            nn.Conv2d(32, 16, kernel_size=(5, 1), stride=(1), padding=(0)),
+            nn.Conv2d(32, 16, kernel_size=(5, 1), stride=(1,), padding=(0)),
             nn.BatchNorm2d(16),
             nn.LeakyReLU(),
-            nn.Conv2d(16, 8, kernel_size=(7, 1), stride=(1), padding=(0)),
+            nn.Conv2d(16, 8, kernel_size=(7, 1), stride=(1,), padding=(0)),
             nn.BatchNorm2d(8),
         )
 
@@ -231,7 +231,7 @@ class Conv_AE(nn.Module):
         )
 
     def _get_qzconv_output(self, shape):
-        input = Variable(torch.rand(1, *shape))
+        input = Variable(torch.rand(shape).unsqueeze(1))
         output_feat = self._forward_features(input)
         n_size = output_feat.size(1)
         return int(n_size)
@@ -277,11 +277,12 @@ class Conv_VAE(Conv_AE):
         super().__init__(in_shape, z_dim, *args, **kwargs)
 
         # Latent distribution parameters
-        self.q_z_mean = nn.Linear(self.q_z_output_dim, self.z_dim)
-        self.q_z_logvar = nn.Linear(self.q_z_output_dim, self.z_dim)
+        self.q_z_mean = nn.Linear(self.q_z_mid_dim, self.z_dim)
+        self.q_z_logvar = nn.Linear(self.q_z_mid_dim, self.z_dim)
 
         # log-det-jacobian = 0 without flows
         self.ldj = 0
+        self.z_size = z_dim
 
     def encode(self, x):
         # Conv
@@ -294,7 +295,7 @@ class Conv_VAE(Conv_AE):
         # Latent
         mean = self.q_z_mean(out)
         logvar = self.q_z_logvar(out)
-        return mean, logvar
+        return out, mean, logvar
 
     def decode(self, z):
         # Dense
@@ -314,8 +315,8 @@ class Conv_VAE(Conv_AE):
         z = mean + torch.randn_like(mean) * torch.exp(0.5 * logvar)
         return z
 
-    def forward(self, x, y):
-        mean, logvar = self.encode(x)
+    def forward(self, x):
+        out, mean, logvar = self.encode(x)
         z = self.reparameterize(mean, logvar)
         out = self.decode(z)
         return out, mean, logvar, self.ldj, z, z
@@ -337,9 +338,9 @@ class PlanarVAE(Conv_VAE):
         self.num_flows = 6  # args.num_flows
 
         # Amortized flow parameters
-        self.amor_u = nn.Linear(self.q_z_output_dim, self.num_flows * self.z_size)
-        self.amor_w = nn.Linear(self.q_z_output_dim, self.num_flows * self.z_size)
-        self.amor_b = nn.Linear(self.q_z_output_dim, self.num_flows)
+        self.amor_u = nn.Linear(self.q_z_mid_dim, self.num_flows * self.z_size)
+        self.amor_w = nn.Linear(self.q_z_mid_dim, self.num_flows * self.z_size)
+        self.amor_b = nn.Linear(self.q_z_mid_dim, self.num_flows)
 
         # Normalizing flow layers
         for k in range(self.num_flows):
@@ -349,7 +350,7 @@ class PlanarVAE(Conv_VAE):
     def forward(self, x):
         self.log_det_j = 0
 
-        z_mu, z_var = self.encode(x)
+        out, z_mu, z_var = self.encode(x)
 
         batch_size = x.size(0)
         # return amortized u an w for all flows
@@ -422,24 +423,24 @@ class OrthogonalSylvesterVAE(Conv_VAE):
         self.diag_activation = nn.Tanh()
 
         self.amor_d = nn.Linear(
-            self.q_z_output_dim,
+            self.q_z_mid_dim,
             self.num_flows * self.num_ortho_vecs * self.num_ortho_vecs,
         )
 
         self.amor_diag1 = nn.Sequential(
-            nn.Linear(self.q_z_output_dim, self.num_flows * self.num_ortho_vecs),
+            nn.Linear(self.q_z_mid_dim, self.num_flows * self.num_ortho_vecs),
             self.diag_activation,
         )
         self.amor_diag2 = nn.Sequential(
-            nn.Linear(self.q_z_output_dim, self.num_flows * self.num_ortho_vecs),
+            nn.Linear(self.q_z_mid_dim, self.num_flows * self.num_ortho_vecs),
             self.diag_activation,
         )
 
         self.amor_q = nn.Linear(
-            self.q_z_output_dim, self.num_flows * self.z_size * self.num_ortho_vecs
+            self.q_z_mid_dim, self.num_flows * self.z_size * self.num_ortho_vecs
         )
         self.amor_b = nn.Linear(
-            self.q_z_output_dim, self.num_flows * self.num_ortho_vecs
+            self.q_z_mid_dim, self.num_flows * self.num_ortho_vecs
         )
 
         # Normalizing flow layers
@@ -490,7 +491,7 @@ class OrthogonalSylvesterVAE(Conv_VAE):
 
         self.log_det_j = 0
 
-        z_mu, z_var = self.encode(x)
+        out, z_mu, z_var = self.encode(x)
 
         batch_size = x.size(0)
         # Amortized r1, r2, q, b for all flows
@@ -577,23 +578,23 @@ class HouseholderSylvesterVAE(Conv_VAE):
         self.diag_activation = nn.Tanh()
 
         self.amor_d = nn.Linear(
-            self.q_z_output_dim, self.num_flows * self.z_size * self.z_size
+            self.q_z_mid_dim, self.num_flows * self.z_size * self.z_size
         )
 
         self.amor_diag1 = nn.Sequential(
-            nn.Linear(self.q_z_output_dim, self.num_flows * self.z_size),
+            nn.Linear(self.q_z_mid_dim, self.num_flows * self.z_size),
             self.diag_activation,
         )
         self.amor_diag2 = nn.Sequential(
-            nn.Linear(self.q_z_output_dim, self.num_flows * self.z_size),
+            nn.Linear(self.q_z_mid_dim, self.num_flows * self.z_size),
             self.diag_activation,
         )
 
         self.amor_q = nn.Linear(
-            self.q_z_output_dim, self.num_flows * self.z_size * self.num_householder
+            self.q_z_mid_dim, self.num_flows * self.z_size * self.num_householder
         )
 
-        self.amor_b = nn.Linear(self.q_z_output_dim, self.num_flows * self.z_size)
+        self.amor_b = nn.Linear(self.q_z_mid_dim, self.num_flows * self.z_size)
 
         # Normalizing flow layers
         for k in range(self.num_flows):
@@ -627,11 +628,10 @@ class HouseholderSylvesterVAE(Conv_VAE):
         return amat
 
     def forward(self, x):
-        self.met = y
         self.log_det_j = 0
         batch_size = x.size(0)
 
-        z_mu, z_var = self.encode(x)
+        out, z_mu, z_var = self.encode(x)
 
         batch_size = x.size(0)
         # Amortized r1, r2, q, b for all flows
@@ -712,19 +712,19 @@ class TriangularSylvesterVAE(Conv_VAE):
         self.diag_activation = nn.Tanh()
 
         self.amor_d = nn.Linear(
-            self.q_z_output_dim, self.num_flows * self.z_size * self.z_size
+            self.q_z_mid_dim, self.num_flows * self.z_size * self.z_size
         )
 
         self.amor_diag1 = nn.Sequential(
-            nn.Linear(self.q_z_output_dim, self.num_flows * self.z_size),
+            nn.Linear(self.q_z_mid_dim, self.num_flows * self.z_size),
             self.diag_activation,
         )
         self.amor_diag2 = nn.Sequential(
-            nn.Linear(self.q_z_output_dim, self.num_flows * self.z_size),
+            nn.Linear(self.q_z_mid_dim, self.num_flows * self.z_size),
             self.diag_activation,
         )
 
-        self.amor_b = nn.Linear(self.q_z_output_dim, self.num_flows * self.z_size)
+        self.amor_b = nn.Linear(self.q_z_mid_dim, self.num_flows * self.z_size)
 
         # Normalizing flow layers
         for k in range(self.num_flows):
@@ -733,10 +733,9 @@ class TriangularSylvesterVAE(Conv_VAE):
             self.add_module("flow_" + str(k), flow_k)
 
     def forward(self, x):
-        self.met = y
         self.log_det_j = 0
 
-        z_mu, z_var = self.encode(x)
+        out, z_mu, z_var = self.encode(x)
 
         batch_size = x.size(0)
         # Amortized r1, r2, b for all flows
@@ -798,9 +797,9 @@ class IAFVAE(Conv_VAE):
 
         # Initialize log-det-jacobian to zero
         self.log_det_j = 0
-        self.h_size = 100  # args.made_h_size
+        self.h_size = 60  # args.made_h_size
 
-        self.h_context = nn.Linear(self.q_z_output_dim, self.h_size)
+        self.h_context = nn.Linear(self.q_z_mid_dim, self.h_size)
 
         # Flow parameters
         self.num_flows = 4
@@ -831,7 +830,7 @@ class IAFVAE(Conv_VAE):
 
     def forward(self, x):
         # mean and variance of z
-        z_mu, z_var, h_context = self.encode(x, y)
+        z_mu, z_var, h_context = self.encode(x)
         # sample z
         z_0 = self.reparameterize(z_mu, z_var)
         # iaf flows
@@ -854,12 +853,13 @@ class ConvFlowVAE(Conv_VAE):
         self.log_det_j = 0
         self.num_flows = 4  # args.num_flows # 6 for chan1
         self.kernel_size = 7  # args.convFlow_kernel_size
+        self.test_mode = False
 
         flow_k = flows.CNN_Flow
 
         # Normalizing flow layers
         self.flow = flow_k(
-            dim=self.latent_dim,
+            dim=self.z_size,
             cnn_layers=self.num_flows,
             kernel_size=self.kernel_size,
             test_mode=self.test_mode,
@@ -867,7 +867,7 @@ class ConvFlowVAE(Conv_VAE):
 
     def forward(self, x):
         # mean and variance of z
-        z_mu, z_var = self.encode(x)
+        out, z_mu, z_var = self.encode(x)
         # sample z
         z_0 = self.reparameterize(z_mu, z_var)
         # Normalizing flows
@@ -886,7 +886,7 @@ class NSF_AR_VAE(Conv_VAE):
     def __init__(self, in_shape, z_dim, *args, **kwargs):
         super().__init__(in_shape, z_dim, *args, **kwargs)
         self.log_det_j = 0
-        self.dim = args.latent_dim
+        self.dim = self.z_size
         self.num_flows = 4  # args.num_flows
 
         flow = flows.NSF_AR
@@ -899,7 +899,7 @@ class NSF_AR_VAE(Conv_VAE):
 
     def forward(self, x):
         # mean and variance of z
-        z_mu, z_var = self.encode(x)
+        out, z_mu, z_var = self.encode(x)
         # sample z
         z = [self.reparameterize(z_mu, z_var)]
         # Normalizing flows

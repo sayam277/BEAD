@@ -25,12 +25,17 @@ from torch.utils.data import DataLoader
 
 from src.utils import helper, loss, diagnostics
 
+import warnings
+from tqdm import TqdmExperimentalWarning
+
+warnings.filterwarnings("ignore", category=TqdmExperimentalWarning)
+
 
 def fit(
     config,
     model,
     train_dl,
-    loss,
+    loss_fn,
     reg_param,
     optimizer,
 ):
@@ -52,16 +57,16 @@ def fit(
 
     running_loss = 0.0
 
-    for idx, inputs in enumerate(tqdm(train_dl, desc="Training: ")):
+    for idx, inputs in enumerate(tqdm(train_dl)):
         # Set the gradients to zero
         optimizer.zero_grad()
 
         # Compute the predicted outputs from the input data
         out = helper.call_forward(model, inputs)
-        recon, mu, logvar = out
+        recon, mu, logvar, ldj, z0, zk = out
 
         # Compute the loss
-        losses = loss.calculate(
+        losses = loss_fn.calculate(
             recon=recon, target=inputs, mu=mu, logvar=logvar, parameters=parameters, log_det_jacobian=0
         )
         
@@ -73,14 +78,14 @@ def fit(
         # Update the optimizer
         optimizer.step()
 
-        running_loss += loss.item()
+        running_loss += loss
 
     epoch_loss = running_loss / (idx + 1)
     print(f"# Training Loss: {epoch_loss:.6f}")
-    return losees, epoch_loss, model
+    return losses, epoch_loss, model
 
 
-def validate(config, model, test_dl, loss, reg_param):
+def validate(config, model, test_dl, loss_fn, reg_param):
     """Function used to validate the training. Not necessary for doing compression, but gives a good indication of wether the model selected is a good fit or not.
     Args:
         model (modelObject): Defines the model one wants to validate. The model used here is passed directly from `fit()`.
@@ -98,22 +103,22 @@ def validate(config, model, test_dl, loss, reg_param):
     running_loss = 0.0
 
     with torch.no_grad():
-        for idx, inputs in enumerate(tqdm(test_dl, desc="Validating: ")):
+        for idx, inputs in enumerate(tqdm(test_dl)):
 
             out = helper.call_forward(model, inputs)
-            recon, mu, logvar = out
+            recon, mu, logvar, ldj, z0, zk = out
 
             # Compute the loss
-            losses = loss.calculate(
+            losses = loss_fn.calculate(
                 recon=recon, target=inputs, mu=mu, logvar=logvar, parameters=parameters, log_det_jacobian=0
             )
 
             loss, *_ = losses
 
-            running_loss += loss.item()
+            running_loss += loss
 
-    epoch_loss = running_loss / (idx + 1)
-    print(f"# Validation Loss: {epoch_loss:.6f}")
+        epoch_loss = running_loss / (idx + 1)
+        print(f"# Validation Loss: {epoch_loss:.6f}")
     return losses, epoch_loss
 
 
@@ -181,6 +186,10 @@ def train(
             constituents_val,
         ]
     ]
+    # Reshape tensors to pass to conv layers
+    events_train, jets_train, constituents_train, events_val, jets_val, constituents_val = [
+        x.unsqueeze(1).float() for x in [events_train, jets_train, constituents_train, events_val, jets_val, constituents_val]
+    ]
     model = model.to(device)
     if verbose:
         print(f"Device used for training: {device}")
@@ -204,7 +213,7 @@ def train(
         g = torch.Generator()
         g.manual_seed(0)
 
-        train_dl = [
+        train_dl_list = [
             DataLoader(
                 ds,
                 batch_size=config.batch_size,
@@ -215,7 +224,7 @@ def train(
             )
             for ds in [events_train, jets_train, constituents_train]
         ]
-        valid_dl = [
+        valid_dl_list = [
             DataLoader(
                 ds,
                 batch_size=config.batch_size,
@@ -227,22 +236,38 @@ def train(
             for ds in [events_val, jets_val, constituents_val]
         ]
     else:
-        train_dl = [
+        train_dl_list = [
             DataLoader(ds, batch_size=config.batch_size, shuffle=False, drop_last=True)
             for ds in [events_train, jets_train, constituents_train]
         ]
-        valid_dl = [
+        valid_dl_list = [
             DataLoader(ds, batch_size=config.batch_size, shuffle=False, drop_last=True)
             for ds in [events_val, jets_val, constituents_val]
         ]
     # Unpacking the DataLoader lists
-    train_dl_events, train_dl_jets, train_dl_constituents = train_dl
-    val_dl_events, val_dl_jets, val_dl_constituents = valid_dl
+    train_dl_events, train_dl_jets, train_dl_constituents = train_dl_list
+    val_dl_events, val_dl_jets, val_dl_constituents = valid_dl_list
+
+    if config.model_name == "pj_ensemble":
+        if verbose:
+            print("Model is an ensemble model")
+    else:
+        if config.input_level == "event":
+            train_dl = train_dl_events
+            valid_dl = val_dl_events
+        elif config.input_level == "jet":
+            train_dl = train_dl_jets
+            valid_dl = val_dl_jets
+        elif config.input_level == "constituent":
+            train_dl = train_dl_constituents
+            valid_dl = val_dl_constituents
+        if verbose:
+            print(f"Input data is of {config.input_level} level")
 
     # Select Loss Function
     try:
         loss_object = helper.get_loss(config.loss_function)
-        loss = loss_object(config=config)
+        loss_fn = loss_object(config=config)
         if verbose:
             print(f"Loss Function: {config.loss_function}")
     except ValueError as e:
@@ -262,7 +287,7 @@ def train(
     if config.early_stopping:
         if verbose:
             print("Early stopping is activated with patience of ", config.early_stopping_patience)
-        early_stopping = EarlyStopping(
+        early_stopper = helper.EarlyStopping(
             patience=config.early_stopping_patience, min_delta=config.min_delta
         )  # Changes to patience & min_delta can be made in configs
 
@@ -270,7 +295,7 @@ def train(
     if config.lr_scheduler:
         if verbose:
             print("Learning rate scheduler is activated with patience of ", config.lr_scheduler_patience)
-        lr_scheduler = LRScheduler(
+        lr_scheduler = helper.LRScheduler(
             optimizer=optimizer, patience=config.lr_scheduler_patience
         )
 
@@ -291,25 +316,26 @@ def train(
     for epoch in range(config.epochs):
         print(f"Epoch {epoch + 1} / {config.epochs}")
 
-        train_losses, train_epoch_loss, trained_model = fit(
+        train_losses, train_epoch_loss, model = fit(
             config=config,
             model=model,
             train_dl=train_dl,
-            loss=loss,
+            loss_fn=loss_fn,
             reg_param=config.reg_param,
             optimizer=optimizer,
         )
-        train_loss.append(train_epoch_loss)
+        train_loss.append(train_epoch_loss.item())
         train_loss_data.append(train_losses)
 
         if 1-config.train_size:
             val_losses, val_epoch_loss = validate(
-                model=trained_model,
+                config=config,
+                model=model,
                 test_dl=valid_dl,
-                loss=loss,
+                loss_fn=loss_fn,
                 reg_param=config.reg_param,
             )
-            val_loss.append(val_epoch_loss)
+            val_loss.append(val_epoch_loss.item())
             val_loss_data.append(val_losses)
         else:
             val_epoch_loss = train_epoch_loss
@@ -319,7 +345,7 @@ def train(
 
         # Implementing LR Scheduler
         if config.lr_scheduler:
-            helper.lr_scheduler(val_epoch_loss)
+            lr_scheduler(val_epoch_loss)
 
         ## Implementation to save models & values after every N config.epochs, where N is stored in 'config.intermittent_saving_patience':
         if config.intermittent_model_saving:
@@ -329,8 +355,8 @@ def train(
 
         # Implementing Early Stopping
         if config.early_stopping:
-            helper.early_stopping(val_epoch_loss)
-            if early_stopping.early_stop:
+            early_stopper(val_epoch_loss)
+            if early_stopper.early_stop:
                 if verbose:
                     print("Early stopping activated at epoch ", epoch)
                 break
@@ -345,13 +371,27 @@ def train(
 
     if verbose:
         print(f"Training the model took {(end - start) / 60:.3} minutes")
+    
     # Save loss data
+    # def extract_items(data):
+    #     if isinstance(data, tuple):
+    #         return tuple(extract_items(item) for item in data)
+    #     elif isinstance(data, torch.Tensor):
+    #         return data.item()
+    #     else:
+    #         raise TypeError("Unsupported type in tuple")
+
+    # # Convert to Python scalars
+    # converted_train_losses = [extract_items(tup) for tup in train_loss_data]
+    # converted_val_losses = [extract_items(tup) for tup in val_loss_data]
+    
     np.save(
         os.path.join(output_path, "results", "epoch_loss_data.npy"), np.array([train_loss, val_loss])
     )
-    np.save(os.path.join(output_path, "results", "loss_data.npy"), np.array([train_loss_data, val_loss_data]))
+    # np.save(os.path.join(output_path, "results", "train_loss_data.npy"), np.array(converted_train_losses))
+    # np.save(os.path.join(output_path, "results", "val_loss_data.npy"), np.array(converted_val_losses))
     if verbose:
         print("Epoch loss data saved as [train_loss, val_loss] to path: ", os.path.join(output_path, "results", "epoch_loss_data.npy"))
-        print("Loss data saved as [train_losses, val_losses] to path: ", os.path.join(output_path, "results", "loss_data.npy"))
+        # print("Loss data saved as [train_losses, val_losses] to path: ", os.path.join(output_path, "results", "loss_data.npy"))
 
-    return trained_model
+    return model

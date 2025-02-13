@@ -269,7 +269,7 @@ class CNN_Flow(nn.Module):
         super(CNN_Flow, self).__init__()
 
         # prepare reversion matrix
-        self.usecuda = True
+        self.usecuda = False
         self.use_revert = use_revert
         self.R = Variable(
             torch.from_numpy(np.flip(np.eye(dim), axis=1).copy()).float(),

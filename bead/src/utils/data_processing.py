@@ -1,3 +1,5 @@
+import os
+import sys
 import numpy as np
 import h5py
 import torch
@@ -313,6 +315,7 @@ def preproc_inputs(paths, config, keyword, verbose: bool = False):
             print("Constituents tensor shape:", constituents_tensor.shape)
     except ValueError as e:
         print(e)
+        sys.exit(1)
 
     # Reshape the data as per configs.input_features
     try:

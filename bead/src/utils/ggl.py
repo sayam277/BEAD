@@ -192,14 +192,14 @@ def set_config(c):
     c.latent_space_size            = 15
     c.normalizations               = "pj_custom"
     c.invert_normalizations        = False
-    c.train_size                   = 1
+    c.train_size                   = 0.95
     c.model_name                   = "Conv_VAE"
     c.input_level                  = "constituent"
     c.input_features               = "4momentum"
     c.model_init                   = "xavier"
     c.loss_function                = "MSE"
     c.optimizer                    = "adamw"
-    c.epochs                       = 5
+    c.epochs                       = 2
     c.lr                           = 0.001
     c.batch_size                   = 512
     c.early_stopping               = True
@@ -418,23 +418,16 @@ def run_training(paths, config, verbose: bool = False):
     
     # Preprocess the data for training
     data = data_processing.preproc_inputs(paths, config, keyword, verbose)
+    
     events_train, jets_train, constituents_train, events_val, jets_val, constituents_val = data
-
-    # Instantiate the model
-    if verbose:
-        print(f"Intitalizing Model with Latent Size - {config.latent_space_size}")
-    model_object = helper.model_init(config.model_name, config.model_init)
-    if verbose:
-        if config.model_init == "xavier":
-            print("Model initialized using Xavier initialization")
-        else:
-            print("Model initialized using default PyTorch initialization")
 
     # Calculate the input shapes to initialize the model
     if config.model_name == "pj_ensemble":
         in_shape_e = [config.batch_size, events_train.shape[1]]
         in_shape_j = [config.batch_size, jets_train.shape[1], jets_train.shape[2]]
         in_shape_c = [config.batch_size, constituents_train.shape[1], constituents_train.shape[2]]
+        # Make in_shape tuple
+        in_shape = (in_shape_e, in_shape_j, in_shape_c)
 
     else:
         if config.input_level == "event":
@@ -444,11 +437,15 @@ def run_training(paths, config, verbose: bool = False):
         elif config.input_level == "constituent":
             in_shape = [config.batch_size, constituents_train.shape[1], constituents_train.shape[2]]
 
-    if config.model_name == "pj_ensemble":
-        model = model_object(in_shape_e=in_shape_e, in_shape_j=in_shape_j, in_shape_c=in_shape_c, z_dim=config.latent_space_size)
-    else:
-        model = model_object(in_shape=in_shape, z_dim=config.latent_space_size)
+    # Instantiate and Initialize the model
     if verbose:
+        print(f"Intitalizing Model with Latent Size - {config.latent_space_size}")
+    model = helper.model_init(in_shape, config)
+    if verbose:
+        if config.model_init == "xavier":
+            print("Model initialized using Xavier initialization")
+        else:
+            print("Model initialized using default PyTorch initialization")   
         print(f"Model architecture:\n{model}")
 
     # Output path
