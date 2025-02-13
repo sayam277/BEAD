@@ -373,17 +373,6 @@ def train(
         print(f"Training the model took {(end - start) / 60:.3} minutes")
     
     # Save loss data
-    # def extract_items(data):
-    #     if isinstance(data, tuple):
-    #         return tuple(extract_items(item) for item in data)
-    #     elif isinstance(data, torch.Tensor):
-    #         return data.item()
-    #     else:
-    #         raise TypeError("Unsupported type in tuple")
-
-    # # Convert to Python scalars
-    # converted_train_losses = [extract_items(tup) for tup in train_loss_data]
-    # converted_val_losses = [extract_items(tup) for tup in val_loss_data]
     
     np.save(
         os.path.join(output_path, "results", "epoch_loss_data.npy"), np.array([train_loss, val_loss])
