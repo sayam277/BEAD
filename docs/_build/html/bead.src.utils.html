@@ -112,7 +112,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bead.src.utils.conversion.convert_csv_to_hdf5_npy_parallel">
-<span class="sig-prename descclassname"><span class="pre">bead.src.utils.conversion.</span></span><span class="sig-name descname"><span class="pre">convert_csv_to_hdf5_npy_parallel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'h5'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/conversion.html#convert_csv_to_hdf5_npy_parallel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.conversion.convert_csv_to_hdf5_npy_parallel" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">bead.src.utils.conversion.</span></span><span class="sig-name descname"><span class="pre">convert_csv_to_hdf5_npy_parallel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csv_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'h5'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/conversion.html#convert_csv_to_hdf5_npy_parallel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.conversion.convert_csv_to_hdf5_npy_parallel" title="Link to this definition"></a></dt>
 <dd><p>Convert a CSV file to HDF5 and .npy files in parallel,
 adding event ID (evt_id) and jet-level properties calculated from constituents.</p>
 <dl class="field-list simple">
@@ -121,7 +121,7 @@ adding event ID (evt_id) and jet-level properties calculated from constituents.<
 <li><p><strong>csv_file</strong> (<em>str</em>) – Path to the input CSV file.</p></li>
 <li><p><strong>output_prefix</strong> (<em>str</em>) – Prefix for the output files.</p></li>
 <li><p><strong>file_type</strong> (<em>str</em>) – Output file type (‘h5’ or ‘npy’).</p></li>
-<li><p><strong>output_path</strong> (<em>str</em>) – Path to save output files.</p></li>
+<li><p><strong>out_path</strong> (<em>str</em>) – Path to save output files.</p></li>
 <li><p><strong>n_workers</strong> (<em>int</em>) – Number of parallel workers.</p></li>
 <li><p><strong>verbose</strong> (<em>bool</em>) – Print progress if True.</p></li>
 </ul>
@@ -228,22 +228,203 @@ consumed by the function f execution.</p>
 </section>
 <section id="module-bead.src.utils.loss">
 <span id="bead-src-utils-loss-module"></span><h2>bead.src.utils.loss module<a class="headerlink" href="#module-bead.src.utils.loss" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="bead.src.utils.loss.accuracy">
-<span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">accuracy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#accuracy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.accuracy" title="Link to this definition"></a></dt>
-<dd><p>Computes the accuracy of a PyTorch model on a given dataset.
-:param model: The PyTorch model to evaluate.
-:type model: nn.Module
-:param dataloader: DataLoader object containing the dataset to evaluate on.
-:type dataloader: DataLoader</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The fraction of correctly classified instances in the dataset.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>accuracy_frac (float)</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="bead.src.utils.loss.BaseLoss">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">BaseLoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#BaseLoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.BaseLoss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for all loss functions.
+Each subclass must implement the calculate() method.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bead.src.utils.loss.BaseLoss.calculate">
+<span class="sig-name descname"><span class="pre">calculate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#BaseLoss.calculate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.BaseLoss.calculate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bead.src.utils.loss.ContrastiveLoss">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">ContrastiveLoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#ContrastiveLoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.ContrastiveLoss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bead.src.utils.loss.BaseLoss" title="bead.src.utils.loss.BaseLoss"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLoss</span></code></a></p>
+<p>Contrastive loss to cluster latent vectors by event generator.</p>
+<dl class="simple">
+<dt>Config parameters:</dt><dd><ul class="simple">
+<li><p>margin: minimum distance desired between dissimilar pairs (default: 1.0)</p></li>
+</ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bead.src.utils.loss.ContrastiveLoss.calculate">
+<span class="sig-name descname"><span class="pre">calculate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">latent</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator_flags</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#ContrastiveLoss.calculate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.ContrastiveLoss.calculate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bead.src.utils.loss.EnergyBasedLoss">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">EnergyBasedLoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#EnergyBasedLoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.EnergyBasedLoss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bead.src.utils.loss.BaseLoss" title="bead.src.utils.loss.BaseLoss"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLoss</span></code></a></p>
+<p>An energy-based loss which encourages lower energy for normal samples and
+higher energy (above a margin) for anomalous samples.</p>
+<dl class="simple">
+<dt>Config parameters:</dt><dd><ul class="simple">
+<li><p>margin: margin threshold for anomaly energy (default: 1.0)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bead.src.utils.loss.EnergyBasedLoss.calculate">
+<span class="sig-name descname"><span class="pre">calculate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">energy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#EnergyBasedLoss.calculate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.EnergyBasedLoss.calculate" title="Link to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>energy</strong> (<em>Tensor</em>) – Predicted energy scores of shape (batch_size,).</p></li>
+<li><p><strong>labels</strong> (<em>Tensor</em>) – Binary labels of shape (batch_size,), with 0 indicating normal
+and 1 indicating anomaly.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Loss formulation:</dt><dd><p>For normal samples (label=0): loss = energy^2 (encouraging low energy).
+For anomalous samples (label=1): loss = ReLU(margin - energy)^2 (encouraging high energy).</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bead.src.utils.loss.KLDivergenceLoss">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">KLDivergenceLoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#KLDivergenceLoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.KLDivergenceLoss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bead.src.utils.loss.BaseLoss" title="bead.src.utils.loss.BaseLoss"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLoss</span></code></a></p>
+<p>KL Divergence loss for VAE latent space regularization.</p>
+<dl class="simple">
+<dt>Uses the formula:</dt><dd><p>KL = -0.5 * sum(1 + logvar - mu^2 - exp(logvar))</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bead.src.utils.loss.KLDivergenceLoss.calculate">
+<span class="sig-name descname"><span class="pre">calculate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logvar</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#KLDivergenceLoss.calculate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.KLDivergenceLoss.calculate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bead.src.utils.loss.L1Regularization">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">L1Regularization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#L1Regularization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.L1Regularization" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bead.src.utils.loss.BaseLoss" title="bead.src.utils.loss.BaseLoss"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLoss</span></code></a></p>
+<p>Computes L1 regularization over model parameters.</p>
+<dl class="simple">
+<dt>Config parameters:</dt><dd><ul class="simple">
+<li><p>weight: scaling factor for the L1 regularization (default: 1e-4)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bead.src.utils.loss.L1Regularization.calculate">
+<span class="sig-name descname"><span class="pre">calculate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#L1Regularization.calculate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.L1Regularization.calculate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bead.src.utils.loss.L2Regularization">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">L2Regularization</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#L2Regularization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.L2Regularization" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bead.src.utils.loss.BaseLoss" title="bead.src.utils.loss.BaseLoss"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLoss</span></code></a></p>
+<p>Computes L2 regularization over model parameters.</p>
+<dl class="simple">
+<dt>Config parameters:</dt><dd><ul class="simple">
+<li><p>weight: scaling factor for the L2 regularization (default: 1e-4)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bead.src.utils.loss.L2Regularization.calculate">
+<span class="sig-name descname"><span class="pre">calculate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#L2Regularization.calculate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.L2Regularization.calculate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bead.src.utils.loss.ReconstructionLoss">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">ReconstructionLoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#ReconstructionLoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.ReconstructionLoss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bead.src.utils.loss.BaseLoss" title="bead.src.utils.loss.BaseLoss"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLoss</span></code></a></p>
+<p>Reconstruction loss for AE/VAE models.
+Supports both MSE and L1 losses based on configuration.</p>
+<dl class="simple">
+<dt>Config parameters:</dt><dd><ul class="simple">
+<li><p>loss_type: ‘mse’ (default) or ‘l1’</p></li>
+<li><p>reduction: reduction method (default ‘mean’)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bead.src.utils.loss.ReconstructionLoss.calculate">
+<span class="sig-name descname"><span class="pre">calculate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#ReconstructionLoss.calculate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.ReconstructionLoss.calculate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bead.src.utils.loss.VAEFlowLoss">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">VAEFlowLoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#VAEFlowLoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.VAEFlowLoss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bead.src.utils.loss.BaseLoss" title="bead.src.utils.loss.BaseLoss"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLoss</span></code></a></p>
+<p>Loss for VAE models augmented with a normalizing flow.
+Includes the log_det_jacobian term from the flow transformation.</p>
+<dl class="simple">
+<dt>Config parameters:</dt><dd><ul class="simple">
+<li><p>reconstruction: dict for ReconstructionLoss config.</p></li>
+<li><p>kl: dict for KLDivergenceLoss config.</p></li>
+<li><p>kl_weight: weight for the KL divergence term.</p></li>
+<li><p>flow_weight: weight for the log_det_jacobian term.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bead.src.utils.loss.VAEFlowLoss.calculate">
+<span class="sig-name descname"><span class="pre">calculate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_det_jacobian</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#VAEFlowLoss.calculate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.VAEFlowLoss.calculate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bead.src.utils.loss.VAELoss">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">VAELoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#VAELoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.VAELoss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bead.src.utils.loss.BaseLoss" title="bead.src.utils.loss.BaseLoss"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLoss</span></code></a></p>
+<p>Total loss for VAE training.
+Combines reconstruction loss and KL divergence loss.</p>
+<dl class="simple">
+<dt>Config parameters:</dt><dd><ul class="simple">
+<li><p>reconstruction: dict for ReconstructionLoss config.</p></li>
+<li><p>kl: dict for KLDivergenceLoss config.</p></li>
+<li><p>kl_weight: scaling factor for KL loss (default: 1.0)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bead.src.utils.loss.VAELoss.calculate">
+<span class="sig-name descname"><span class="pre">calculate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logvar</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#VAELoss.calculate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.VAELoss.calculate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bead.src.utils.loss.WassersteinLoss">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bead.src.utils.loss.</span></span><span class="sig-name descname"><span class="pre">WassersteinLoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#WassersteinLoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.WassersteinLoss" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#bead.src.utils.loss.BaseLoss" title="bead.src.utils.loss.BaseLoss"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseLoss</span></code></a></p>
+<p>Computes an approximation of the Earth Mover’s Distance (Wasserstein Loss)
+between two 1D probability distributions.</p>
+<p>Assumes inputs are tensors of shape (batch_size, n) representing histograms or distributions.</p>
+<dl class="simple">
+<dt>Config parameters:</dt><dd><ul class="simple">
+<li><p>dim: dimension along which to compute the cumulative sum (default: 1)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bead.src.utils.loss.WassersteinLoss.calculate">
+<span class="sig-name descname"><span class="pre">calculate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bead/src/utils/loss.html#WassersteinLoss.calculate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bead.src.utils.loss.WassersteinLoss.calculate" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py function">

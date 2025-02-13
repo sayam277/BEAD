@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-bead documentation
+BEAD documentation
 ==================
 
 BEAD is a Python package that uses deep learning based methods for anomaly detection in HEP data for new physics searches.

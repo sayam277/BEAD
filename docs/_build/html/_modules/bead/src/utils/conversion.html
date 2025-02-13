@@ -126,11 +126,14 @@
 <span class="sd">        tuple: (event_data, jets, constituents) for the event.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Extract event-level variables</span>
-    <span class="n">evt_weight</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">evtwt</span>
-    <span class="n">met</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">met</span>
-    <span class="n">met_phi</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">metphi</span>
-    <span class="n">num_jets</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">njets</span><span class="p">)</span>
+    <span class="n">evt_weight</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">met</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">met_phi</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">num_jets</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
     <span class="n">event_data</span> <span class="o">=</span> <span class="p">[</span><span class="n">evt_id</span><span class="p">,</span> <span class="n">evt_weight</span><span class="p">,</span> <span class="n">met</span><span class="p">,</span> <span class="n">met_phi</span><span class="p">,</span> <span class="n">num_jets</span><span class="p">]</span>
+
+    <span class="c1"># #print row[4] to debug</span>
+    <span class="c1"># print(row[4])</span>
 
     <span class="n">jet_offset</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># First 4 columns are event-level variables</span>
     <span class="n">jets</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Temporary list to hold jet-level data for this event</span>
@@ -180,8 +183,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">convert_csv_to_hdf5_npy_parallel</span><span class="p">(</span>
     <span class="n">csv_file</span><span class="p">,</span>
     <span class="n">output_prefix</span><span class="p">,</span>
+    <span class="n">out_path</span><span class="p">,</span>
     <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;h5&quot;</span><span class="p">,</span>
-    <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="n">n_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">):</span>
@@ -193,15 +196,19 @@
 <span class="sd">        csv_file (str): Path to the input CSV file.</span>
 <span class="sd">        output_prefix (str): Prefix for the output files.</span>
 <span class="sd">        file_type (str): Output file type (&#39;h5&#39; or &#39;npy&#39;).</span>
-<span class="sd">        output_path (str): Path to save output files.</span>
+<span class="sd">        out_path (str): Path to save output files.</span>
 <span class="sd">        n_workers (int): Number of parallel workers.</span>
 <span class="sd">        verbose (bool): Print progress if True.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Read the CSV file</span>
-    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">csv_file</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">csv_file</span><span class="p">)</span><span class="c1">#, on_bad_lines=&#39;skip&#39;)</span>
+    <span class="c1"># Remove rows with all NaN values</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">how</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
 
     <span class="c1"># Parallel processing of events</span>
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="c1"># print the file path being parsed</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="n">csv_file</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> events in parallel using </span><span class="si">{</span><span class="n">n_workers</span><span class="si">}</span><span class="s2"> workers...&quot;</span><span class="p">)</span>
     <span class="n">event_results</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">with</span> <span class="n">get_reusable_executor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">n_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
@@ -228,19 +235,19 @@
 
     <span class="k">if</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s2">&quot;npy&quot;</span><span class="p">:</span>
         <span class="c1"># Save to .npy files</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_path</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_prefix</span><span class="si">}</span><span class="s2">_events.npy&quot;</span><span class="p">,</span> <span class="n">event_data</span><span class="p">)</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_path</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_prefix</span><span class="si">}</span><span class="s2">_jets.npy&quot;</span><span class="p">,</span> <span class="n">jet_data</span><span class="p">)</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">output_path</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_prefix</span><span class="si">}</span><span class="s2">_constituents.npy&quot;</span><span class="p">,</span> <span class="n">constituent_data</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">out_path</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">output_prefix</span><span class="si">}</span><span class="s2">_events.npy&quot;</span><span class="p">,</span> <span class="n">event_data</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">out_path</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">output_prefix</span><span class="si">}</span><span class="s2">_jets.npy&quot;</span><span class="p">,</span> <span class="n">jet_data</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">out_path</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">output_prefix</span><span class="si">}</span><span class="s2">_constituents.npy&quot;</span><span class="p">,</span> <span class="n">constituent_data</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s2">&quot;h5&quot;</span><span class="p">:</span>
         <span class="c1"># Save to HDF5 file</span>
-        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">output_path</span> <span class="o">+</span> <span class="n">output_prefix</span> <span class="o">+</span> <span class="s2">&quot;.h5&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">h5file</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">out_path</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">output_prefix</span> <span class="o">+</span> <span class="s2">&quot;.h5&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">h5file</span><span class="p">:</span>
             <span class="n">h5file</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;events&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">event_data</span><span class="p">)</span>
             <span class="n">h5file</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;jets&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">jet_data</span><span class="p">)</span>
             <span class="n">h5file</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;constituents&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">constituent_data</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data saved to files with prefix </span><span class="si">{</span><span class="n">output_prefix</span><span class="si">}</span><span class="s2"> at </span><span class="si">{</span><span class="n">output_path</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Data saved to files with prefix </span><span class="si">{</span><span class="n">output_prefix</span><span class="si">}</span><span class="s2"> at </span><span class="si">{</span><span class="n">out_path</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span></div>
 
 </pre></div>
 

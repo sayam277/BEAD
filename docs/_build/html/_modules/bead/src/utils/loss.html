@@ -175,13 +175,13 @@
 <span class="sd">    Computes a sparse loss function consisting of three terms: the Earth Mover&#39;s Distance (EMD) loss between the</span>
 <span class="sd">    true and reconstructed data, the mean squared error (MSE) loss between the reconstructed and true data, and a</span>
 <span class="sd">    L1 regularization term on the output of a list of model children.</span>
-<span class="sd">    </span>
+
 <span class="sd">    Args: model_children (list): List of PyTorch modules representing the model architecture to be regularized.</span>
 <span class="sd">    true_data (torch.Tensor): The ground truth data, with shape (batch_size, num_features). reconstructed_data (</span>
 <span class="sd">    torch.Tensor): The reconstructed data, with shape (batch_size, num_features). reg_param (float): The weight of</span>
 <span class="sd">    the L1 regularization term in the loss function. validate (bool): If True, returns only the EMD loss. If False,</span>
 <span class="sd">    computes the full loss with the L1 regularization term.</span>
-<span class="sd">    </span>
+
 <span class="sd">    Returns:</span>
 <span class="sd">        If validate is False, returns a tuple with three elements:</span>
 <span class="sd">        - loss (torch.Tensor): The full sparse loss function, with shape ().</span>
@@ -225,13 +225,13 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Computes a sparse loss function consisting of two terms: the mean squared error (MSE) loss between the</span>
 <span class="sd">    reconstructed and true data, and a L1 regularization term on the output of a list of model children.</span>
-<span class="sd">    </span>
+
 <span class="sd">    Args: model_children (list): List of PyTorch modules representing the model architecture to be regularized.</span>
 <span class="sd">    true_data (torch.Tensor): The ground truth data, with shape (batch_size, num_features). reconstructed_data (</span>
 <span class="sd">    torch.Tensor): The reconstructed data, with shape (batch_size, num_features). reg_param (float): The weight of</span>
 <span class="sd">    the L1 regularization term in the loss function. validate (bool): If True, returns only the MSE loss. If False,</span>
 <span class="sd">    computes the full loss with the L1 regularization term.</span>
-<span class="sd">    </span>
+
 <span class="sd">    Returns:</span>
 <span class="sd">        If validate is False, returns a tuple with three elements:</span>
 <span class="sd">        - loss (torch.Tensor): The full sparse loss function, with shape ().</span>
@@ -301,40 +301,340 @@
 
 
 
-<span class="c1"># Accuracy function still WIP. Not working properly.</span>
-<span class="c1"># Probably has to do with total_correct counter.</span>
-
-
-<div class="viewcode-block" id="accuracy">
-<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.accuracy">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">accuracy</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">):</span>
+<div class="viewcode-block" id="BaseLoss">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.BaseLoss">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseLoss</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Computes the accuracy of a PyTorch model on a given dataset.</span>
-<span class="sd">    Args:</span>
-<span class="sd">        model (nn.Module): The PyTorch model to evaluate.</span>
-<span class="sd">        dataloader (DataLoader): DataLoader object containing the dataset to evaluate on.</span>
-<span class="sd">    Returns:</span>
-<span class="sd">        accuracy_frac (float): The fraction of correctly classified instances in the dataset.</span>
+<span class="sd">    Base class for all loss functions.</span>
+<span class="sd">    Each subclass must implement the calculate() method.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Accuracy&quot;</span><span class="p">)</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
 
-    <span class="n">total_correct</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">total_instances</span> <span class="o">=</span> <span class="mi">0</span>
+<div class="viewcode-block" id="BaseLoss.calculate">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.BaseLoss.calculate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Subclasses must implement the calculate() method.&quot;</span><span class="p">)</span></div>
+</div>
 
-    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">dataloader</span><span class="p">):</span>
-            <span class="n">x</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">data</span>
-            <span class="n">classifications</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
-            <span class="n">correct_pred</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">classifications</span> <span class="o">==</span> <span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+<span class="c1"># ---------------------------</span>
+<span class="c1"># Standard AE/VAE Losses</span>
+<span class="c1"># ---------------------------</span>
+<div class="viewcode-block" id="ReconstructionLoss">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.ReconstructionLoss">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReconstructionLoss</span><span class="p">(</span><span class="n">BaseLoss</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reconstruction loss for AE/VAE models.</span>
+<span class="sd">    Supports both MSE and L1 losses based on configuration.</span>
+<span class="sd">    </span>
+<span class="sd">    Config parameters:</span>
+<span class="sd">      - loss_type: &#39;mse&#39; (default) or &#39;l1&#39;</span>
+<span class="sd">      - reduction: reduction method (default &#39;mean&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ReconstructionLoss</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loss_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;loss_type&quot;</span><span class="p">,</span> <span class="s2">&quot;mse&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reduction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reduction&quot;</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">)</span>
 
-            <span class="n">total_correct</span> <span class="o">+=</span> <span class="n">correct_pred</span>
-            <span class="n">total_instances</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<div class="viewcode-block" id="ReconstructionLoss.calculate">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.ReconstructionLoss.calculate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recon</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_type</span> <span class="o">==</span> <span class="s2">&quot;mse&quot;</span><span class="p">:</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">recon</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">reduction</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_type</span> <span class="o">==</span> <span class="s2">&quot;l1&quot;</span><span class="p">:</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">l1_loss</span><span class="p">(</span><span class="n">recon</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">reduction</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported reconstruction loss type: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">loss</span></div>
+</div>
 
-    <span class="n">accuracy_frac</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">total_correct</span> <span class="o">/</span> <span class="n">total_instances</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">accuracy_frac</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">accuracy_frac</span></div>
+
+<div class="viewcode-block" id="KLDivergenceLoss">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.KLDivergenceLoss">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KLDivergenceLoss</span><span class="p">(</span><span class="n">BaseLoss</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    KL Divergence loss for VAE latent space regularization.</span>
+<span class="sd">    </span>
+<span class="sd">    Uses the formula:</span>
+<span class="sd">        KL = -0.5 * sum(1 + logvar - mu^2 - exp(logvar))</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">KLDivergenceLoss</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+<div class="viewcode-block" id="KLDivergenceLoss.calculate">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.KLDivergenceLoss.calculate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span><span class="p">):</span>
+        <span class="n">kl_loss</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">logvar</span> <span class="o">-</span> <span class="n">mu</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">logvar</span><span class="o">.</span><span class="n">exp</span><span class="p">())</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">kl_loss</span> <span class="o">/</span> <span class="n">batch_size</span></div>
+</div>
+
+
+<div class="viewcode-block" id="VAELoss">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.VAELoss">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">VAELoss</span><span class="p">(</span><span class="n">BaseLoss</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Total loss for VAE training.</span>
+<span class="sd">    Combines reconstruction loss and KL divergence loss.</span>
+<span class="sd">    </span>
+<span class="sd">    Config parameters:</span>
+<span class="sd">      - reconstruction: dict for ReconstructionLoss config.</span>
+<span class="sd">      - kl: dict for KLDivergenceLoss config.</span>
+<span class="sd">      - kl_weight: scaling factor for KL loss (default: 1.0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">VAELoss</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recon_loss_fn</span> <span class="o">=</span> <span class="n">ReconstructionLoss</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reconstruction&quot;</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kl_loss_fn</span> <span class="o">=</span> <span class="n">KLDivergenceLoss</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;kl&quot;</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kl_weight</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;kl_weight&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="VAELoss.calculate">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.VAELoss.calculate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recon</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span><span class="p">):</span>
+        <span class="n">recon_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recon_loss_fn</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span><span class="n">recon</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="n">kl_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kl_loss_fn</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">recon_loss</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">kl_weight</span> <span class="o">*</span> <span class="n">kl_loss</span></div>
+</div>
+
+
+<span class="c1"># ---------------------------</span>
+<span class="c1"># Advanced VAE+Flow Loss</span>
+<span class="c1"># ---------------------------</span>
+<div class="viewcode-block" id="VAEFlowLoss">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.VAEFlowLoss">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">VAEFlowLoss</span><span class="p">(</span><span class="n">BaseLoss</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loss for VAE models augmented with a normalizing flow.</span>
+<span class="sd">    Includes the log_det_jacobian term from the flow transformation.</span>
+<span class="sd">    </span>
+<span class="sd">    Config parameters:</span>
+<span class="sd">      - reconstruction: dict for ReconstructionLoss config.</span>
+<span class="sd">      - kl: dict for KLDivergenceLoss config.</span>
+<span class="sd">      - kl_weight: weight for the KL divergence term.</span>
+<span class="sd">      - flow_weight: weight for the log_det_jacobian term.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">VAEFlowLoss</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recon_loss_fn</span> <span class="o">=</span> <span class="n">ReconstructionLoss</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;reconstruction&quot;</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kl_loss_fn</span> <span class="o">=</span> <span class="n">KLDivergenceLoss</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;kl&quot;</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kl_weight</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;kl_weight&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flow_weight</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;flow_weight&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="VAEFlowLoss.calculate">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.VAEFlowLoss.calculate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recon</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span><span class="p">,</span> <span class="n">log_det_jacobian</span><span class="p">):</span>
+        <span class="n">recon_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recon_loss_fn</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span><span class="n">recon</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="n">kl_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kl_loss_fn</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span><span class="p">)</span>
+        <span class="c1"># Subtract the log-det term (maximizing likelihood).</span>
+        <span class="n">total_loss</span> <span class="o">=</span> <span class="n">recon_loss</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">kl_weight</span> <span class="o">*</span> <span class="n">kl_loss</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">flow_weight</span> <span class="o">*</span> <span class="n">log_det_jacobian</span>
+        <span class="k">return</span> <span class="n">total_loss</span></div>
+</div>
+
+
+<span class="c1"># ---------------------------</span>
+<span class="c1"># Contrastive Loss</span>
+<span class="c1"># ---------------------------</span>
+<div class="viewcode-block" id="ContrastiveLoss">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.ContrastiveLoss">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ContrastiveLoss</span><span class="p">(</span><span class="n">BaseLoss</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Contrastive loss to cluster latent vectors by event generator.</span>
+<span class="sd">    </span>
+<span class="sd">    Config parameters:</span>
+<span class="sd">      - margin: minimum distance desired between dissimilar pairs (default: 1.0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ContrastiveLoss</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">margin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;margin&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ContrastiveLoss.calculate">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.ContrastiveLoss.calculate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">latent</span><span class="p">,</span> <span class="n">generator_flags</span><span class="p">):</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="n">latent</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">distances</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cdist</span><span class="p">(</span><span class="n">latent</span><span class="p">,</span> <span class="n">latent</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">generator_flags</span> <span class="o">=</span> <span class="n">generator_flags</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">same_generator</span> <span class="o">=</span> <span class="p">(</span><span class="n">generator_flags</span> <span class="o">==</span> <span class="n">generator_flags</span><span class="o">.</span><span class="n">t</span><span class="p">())</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="n">pos_loss</span> <span class="o">=</span> <span class="n">same_generator</span> <span class="o">*</span> <span class="n">distances</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">neg_loss</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">same_generator</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">margin</span> <span class="o">-</span> <span class="n">distances</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">num_pairs</span> <span class="o">=</span> <span class="n">batch_size</span> <span class="o">*</span> <span class="p">(</span><span class="n">batch_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">pos_loss</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="n">neg_loss</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">/</span> <span class="n">num_pairs</span></div>
+</div>
+
+
+<span class="c1"># ---------------------------</span>
+<span class="c1"># Earth Mover&#39;s Distance / Wasserstein Loss</span>
+<span class="c1"># ---------------------------</span>
+<div class="viewcode-block" id="WassersteinLoss">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.WassersteinLoss">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WassersteinLoss</span><span class="p">(</span><span class="n">BaseLoss</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes an approximation of the Earth Mover&#39;s Distance (Wasserstein Loss)</span>
+<span class="sd">    between two 1D probability distributions.</span>
+<span class="sd">    </span>
+<span class="sd">    Assumes inputs are tensors of shape (batch_size, n) representing histograms or distributions.</span>
+<span class="sd">    </span>
+<span class="sd">    Config parameters:</span>
+<span class="sd">      - dim: dimension along which to compute the cumulative sum (default: 1)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">WassersteinLoss</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dim&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WassersteinLoss.calculate">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.WassersteinLoss.calculate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="c1"># Normalize if not already probability distributions</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">p</span> <span class="o">/</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">q</span> <span class="o">/</span> <span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span>
+        <span class="n">p_cdf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+        <span class="n">q_cdf</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">p_cdf</span> <span class="o">-</span> <span class="n">q_cdf</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">loss</span></div>
+</div>
+
+
+<span class="c1"># ---------------------------</span>
+<span class="c1"># Regularization Losses</span>
+<span class="c1"># ---------------------------</span>
+<div class="viewcode-block" id="L1Regularization">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.L1Regularization">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">L1Regularization</span><span class="p">(</span><span class="n">BaseLoss</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes L1 regularization over model parameters.</span>
+<span class="sd">    </span>
+<span class="sd">    Config parameters:</span>
+<span class="sd">      - weight: scaling factor for the L1 regularization (default: 1e-4)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">L1Regularization</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;weight&quot;</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)</span>
+
+<div class="viewcode-block" id="L1Regularization.calculate">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.L1Regularization.calculate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
+        <span class="n">l1_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">:</span>
+            <span class="n">l1_loss</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">param</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span> <span class="o">*</span> <span class="n">l1_loss</span></div>
+</div>
+
+
+<div class="viewcode-block" id="L2Regularization">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.L2Regularization">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">L2Regularization</span><span class="p">(</span><span class="n">BaseLoss</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes L2 regularization over model parameters.</span>
+<span class="sd">    </span>
+<span class="sd">    Config parameters:</span>
+<span class="sd">      - weight: scaling factor for the L2 regularization (default: 1e-4)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">L2Regularization</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;weight&quot;</span><span class="p">,</span> <span class="mf">1e-4</span><span class="p">)</span>
+
+<div class="viewcode-block" id="L2Regularization.calculate">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.L2Regularization.calculate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
+        <span class="n">l2_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">:</span>
+            <span class="n">l2_loss</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">param</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span> <span class="o">*</span> <span class="n">l2_loss</span></div>
+</div>
+
+
+<span class="c1"># ---------------------------</span>
+<span class="c1"># Energy Based Loss</span>
+<span class="c1"># ---------------------------</span>
+<div class="viewcode-block" id="EnergyBasedLoss">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.EnergyBasedLoss">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EnergyBasedLoss</span><span class="p">(</span><span class="n">BaseLoss</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An energy-based loss which encourages lower energy for normal samples and </span>
+<span class="sd">    higher energy (above a margin) for anomalous samples.</span>
+<span class="sd">    </span>
+<span class="sd">    Config parameters:</span>
+<span class="sd">      - margin: margin threshold for anomaly energy (default: 1.0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">EnergyBasedLoss</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">margin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;margin&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EnergyBasedLoss.calculate">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.loss.EnergyBasedLoss.calculate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">energy</span><span class="p">,</span> <span class="n">labels</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            energy (Tensor): Predicted energy scores of shape (batch_size,).</span>
+<span class="sd">            labels (Tensor): Binary labels of shape (batch_size,), with 0 indicating normal </span>
+<span class="sd">                             and 1 indicating anomaly.</span>
+<span class="sd">                             </span>
+<span class="sd">        Loss formulation:</span>
+<span class="sd">            For normal samples (label=0): loss = energy^2 (encouraging low energy).</span>
+<span class="sd">            For anomalous samples (label=1): loss = ReLU(margin - energy)^2 (encouraging high energy).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Ensure labels are float tensors</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="n">loss_normal</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">labels</span><span class="p">)</span> <span class="o">*</span> <span class="n">energy</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">loss_anomaly</span> <span class="o">=</span> <span class="n">labels</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">margin</span> <span class="o">-</span> <span class="n">energy</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">loss_normal</span> <span class="o">+</span> <span class="n">loss_anomaly</span><span class="p">)</span></div>
+</div>
+
+
+<span class="c1"># # ---------------------------</span>
+<span class="c1"># # Example usage / Testing</span>
+<span class="c1"># # ---------------------------</span>
+<span class="c1"># if __name__ == &quot;__main__&quot;:</span>
+<span class="c1">#     # Example configuration dictionary (could be loaded from a file)</span>
+<span class="c1">#     config = {</span>
+<span class="c1">#         &quot;reconstruction&quot;: {&quot;loss_type&quot;: &quot;mse&quot;, &quot;reduction&quot;: &quot;mean&quot;},</span>
+<span class="c1">#         &quot;kl&quot;: {},</span>
+<span class="c1">#         &quot;kl_weight&quot;: 0.1,</span>
+<span class="c1">#         &quot;flow_weight&quot;: 0.5,</span>
+<span class="c1">#         &quot;margin&quot;: 1.0,</span>
+<span class="c1">#         &quot;dim&quot;: 1,</span>
+<span class="c1">#         &quot;weight&quot;: 1e-4</span>
+<span class="c1">#     }</span>
+    
+<span class="c1">#     # Dummy data for demonstration</span>
+<span class="c1">#     recon = torch.randn(4, 10)</span>
+<span class="c1">#     target = torch.randn(4, 10)</span>
+<span class="c1">#     mu = torch.randn(4, 5)</span>
+<span class="c1">#     logvar = torch.randn(4, 5)</span>
+<span class="c1">#     log_det_jacobian = torch.tensor(0.2)</span>
+<span class="c1">#     latent = torch.randn(4, 5)</span>
+<span class="c1">#     generator_flags = torch.tensor([0, 1, 0, 2])</span>
+    
+<span class="c1">#     # For WassersteinLoss assume two distributions (e.g., histograms)</span>
+<span class="c1">#     p = torch.abs(torch.randn(4, 20))</span>
+<span class="c1">#     q = torch.abs(torch.randn(4, 20))</span>
+    
+<span class="c1">#     # Example energy and labels for EnergyBasedLoss</span>
+<span class="c1">#     energy = torch.randn(4).abs()</span>
+<span class="c1">#     labels = torch.tensor([0, 1, 0, 1])</span>
+    
+<span class="c1">#     # Initialize losses</span>
+<span class="c1">#     rec_loss_fn = ReconstructionLoss(config[&quot;reconstruction&quot;])</span>
+<span class="c1">#     kl_loss_fn = KLDivergenceLoss(config[&quot;kl&quot;])</span>
+<span class="c1">#     vae_loss_fn = VAELoss(config)</span>
+<span class="c1">#     flow_loss_fn = VAEFlowLoss(config)</span>
+<span class="c1">#     contrastive_loss_fn = ContrastiveLoss({&quot;margin&quot;: config[&quot;margin&quot;]})</span>
+<span class="c1">#     wasserstein_loss_fn = WassersteinLoss({&quot;dim&quot;: config[&quot;dim&quot;]})</span>
+<span class="c1">#     l1_reg_fn = L1Regularization({&quot;weight&quot;: config[&quot;weight&quot;]})</span>
+<span class="c1">#     l2_reg_fn = L2Regularization({&quot;weight&quot;: config[&quot;weight&quot;]})</span>
+<span class="c1">#     energy_loss_fn = EnergyBasedLoss({&quot;margin&quot;: config[&quot;margin&quot;]})</span>
+    
+<span class="c1">#     # Calculate and print losses</span>
+<span class="c1">#     print(&quot;Reconstruction Loss:&quot;, rec_loss_fn.calculate(recon, target).item())</span>
+<span class="c1">#     print(&quot;KL Divergence Loss:&quot;, kl_loss_fn.calculate(mu, logvar).item())</span>
+<span class="c1">#     print(&quot;VAE Loss:&quot;, vae_loss_fn.calculate(recon, target, mu, logvar).item())</span>
+<span class="c1">#     print(&quot;VAE+Flow Loss:&quot;, flow_loss_fn.calculate(recon, target, mu, logvar, log_det_jacobian).item())</span>
+<span class="c1">#     print(&quot;Contrastive Loss:&quot;, contrastive_loss_fn.calculate(latent, generator_flags).item())</span>
+<span class="c1">#     print(&quot;Wasserstein Loss:&quot;, wasserstein_loss_fn.calculate(p, q).item())</span>
+<span class="c1">#     # For regularizations, assume we have a list of parameters (using recon tensor as a placeholder)</span>
+<span class="c1">#     print(&quot;L1 Regularization Loss:&quot;, l1_reg_fn.calculate([recon]).item())</span>
+<span class="c1">#     print(&quot;L2 Regularization Loss:&quot;, l2_reg_fn.calculate([recon]).item())</span>
+<span class="c1">#     print(&quot;Energy Based Loss:&quot;, energy_loss_fn.calculate(energy, labels).item())</span>
 
 </pre></div>
 
