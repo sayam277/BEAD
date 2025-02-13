@@ -122,7 +122,7 @@ def convert_csv_to_hdf5_npy_parallel(
         verbose (bool): Print progress if True.
     """
     # Read the CSV file
-    data = pd.read_csv(csv_file)#, on_bad_lines='skip')
+    data = pd.read_csv(csv_file)  # , on_bad_lines='skip')
     # Remove rows with all NaN values
     data = data.dropna(how="all")
 

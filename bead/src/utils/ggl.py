@@ -414,18 +414,29 @@ def run_training(paths, config, verbose: bool = False):
     """
     start = time.time()
 
-    keyword = 'bkg_train'
-    
+    keyword = "bkg_train"
+
     # Preprocess the data for training
     data = data_processing.preproc_inputs(paths, config, keyword, verbose)
-    
-    events_train, jets_train, constituents_train, events_val, jets_val, constituents_val = data
+
+    (
+        events_train,
+        jets_train,
+        constituents_train,
+        events_val,
+        jets_val,
+        constituents_val,
+    ) = data
 
     # Calculate the input shapes to initialize the model
     if config.model_name == "pj_ensemble":
         in_shape_e = [config.batch_size, events_train.shape[1]]
         in_shape_j = [config.batch_size, jets_train.shape[1], jets_train.shape[2]]
-        in_shape_c = [config.batch_size, constituents_train.shape[1], constituents_train.shape[2]]
+        in_shape_c = [
+            config.batch_size,
+            constituents_train.shape[1],
+            constituents_train.shape[2],
+        ]
         # Make in_shape tuple
         in_shape = (in_shape_e, in_shape_j, in_shape_c)
 
@@ -435,7 +446,11 @@ def run_training(paths, config, verbose: bool = False):
         elif config.input_level == "jet":
             in_shape = [config.batch_size, jets_train.shape[1], jets_train.shape[2]]
         elif config.input_level == "constituent":
-            in_shape = [config.batch_size, constituents_train.shape[1], constituents_train.shape[2]]
+            in_shape = [
+                config.batch_size,
+                constituents_train.shape[1],
+                constituents_train.shape[2],
+            ]
 
     # Instantiate and Initialize the model
     if verbose:
@@ -445,7 +460,7 @@ def run_training(paths, config, verbose: bool = False):
         if config.model_init == "xavier":
             print("Model initialized using Xavier initialization")
         else:
-            print("Model initialized using default PyTorch initialization")   
+            print("Model initialized using default PyTorch initialization")
         print(f"Model architecture:\n{model}")
 
     # Output path

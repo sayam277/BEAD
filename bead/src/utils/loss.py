@@ -21,11 +21,12 @@ from torch.nn import functional as F
 from torch import distributions as dist
 
 
-class BaseLoss():
+class BaseLoss:
     """
     Base class for all loss functions.
     Each subclass must implement the calculate() method.
     """
+
     def __init__(self, config):
         self.config = config
 
@@ -40,16 +41,17 @@ class ReconstructionLoss(BaseLoss):
     """
     Reconstruction loss for AE/VAE models.
     Supports both MSE and L1 losses based on configuration.
-    
+
     Config parameters:
       - loss_type: 'mse' (default) or 'l1'
       - reduction: reduction method (default 'mean' or 'sum')
     """
+
     def __init__(self, config):
         super(ReconstructionLoss, self).__init__(config)
         self.reg_param = config.reg_param
 
-    def calculate(self, recon, target, loss_type='mse', reduction='mean'):
+    def calculate(self, recon, target, loss_type="mse", reduction="mean"):
         self.loss_type = loss_type
         self.reduction = reduction
 
@@ -68,10 +70,11 @@ class ReconstructionLoss(BaseLoss):
 class KLDivergenceLoss(BaseLoss):
     """
     KL Divergence loss for VAE latent space regularization.
-    
+
     Uses the formula:
         KL = -0.5 * sum(1 + logvar - mu^2 - exp(logvar))
     """
+
     def __init__(self, config):
         super(KLDivergenceLoss, self).__init__(config)
 
@@ -88,12 +91,13 @@ class WassersteinLoss(BaseLoss):
     """
     Computes an approximation of the Earth Mover's Distance (Wasserstein Loss)
     between two 1D probability distributions.
-    
+
     Assumes inputs are tensors of shape (batch_size, n) representing histograms or distributions.
-    
+
     Config parameters:
       - dim: dimension along which to compute the cumulative sum (default: 1)
     """
+
     def __init__(self, config):
         super(WassersteinLoss, self).__init__(config)
         self.dim = 1
@@ -107,16 +111,18 @@ class WassersteinLoss(BaseLoss):
         loss = torch.mean(torch.abs(p_cdf - q_cdf))
         return (loss,)
 
+
 # ---------------------------
 # Regularization Losses
 # ---------------------------
 class L1Regularization(BaseLoss):
     """
     Computes L1 regularization over model parameters.
-    
+
     Config parameters:
       - weight: scaling factor for the L1 regularization (default: 1e-4)
     """
+
     def __init__(self, config):
         super(L1Regularization, self).__init__(config)
         self.weight = self.config.reg_param
@@ -127,13 +133,15 @@ class L1Regularization(BaseLoss):
             l1_loss += torch.sum(torch.abs(param))
         return (self.weight * l1_loss,)
 
+
 class L2Regularization(BaseLoss):
     """
     Computes L2 regularization over model parameters.
-    
+
     Config parameters:
       - weight: scaling factor for the L2 regularization (default: 1e-4)
     """
+
     def __init__(self, config):
         super(L2Regularization, self).__init__(config)
         self.weight = self.config.reg_param
@@ -141,7 +149,7 @@ class L2Regularization(BaseLoss):
     def calculate(self, parameters):
         l2_loss = 0.0
         for param in parameters:
-            l2_loss += torch.sum(param ** 2)
+            l2_loss += torch.sum(param**2)
         return self.weight * l2_loss
 
 
@@ -151,13 +159,14 @@ class L2Regularization(BaseLoss):
 class BinaryCrossEntropyLoss(BaseLoss):
     """
     Binary Cross Entropy Loss for binary classification tasks.
-    
+
     Config parameters:
       - use_logits: Boolean indicating if the predictions are raw logits (default: True).
       - reduction: Reduction method for the loss ('mean', 'sum', etc., default: 'mean').
 
     Note: Not supported for full_chain mode yet
     """
+
     def __init__(self, config):
         super(BinaryCrossEntropyLoss, self).__init__(config)
         self.use_logits = self.config.get("use_logits", True)
@@ -166,20 +175,24 @@ class BinaryCrossEntropyLoss(BaseLoss):
     def calculate(self, predictions, targets):
         """
         Calculate the binary cross entropy loss.
-        
+
         Args:
             predictions (Tensor): Predicted outputs (logits or probabilities).
             targets (Tensor): Ground truth binary labels.
-            
+
         Returns:
             Tensor: The computed binary cross entropy loss.
         """
         # Ensure targets are float tensors.
         targets = targets.float()
         if self.use_logits:
-            loss = F.binary_cross_entropy_with_logits(predictions, targets, reduction=self.reduction)
+            loss = F.binary_cross_entropy_with_logits(
+                predictions, targets, reduction=self.reduction
+            )
         else:
-            loss = F.binary_cross_entropy(predictions, targets, reduction=self.reduction)
+            loss = F.binary_cross_entropy(
+                predictions, targets, reduction=self.reduction
+            )
         return (loss,)
 
 
@@ -190,12 +203,13 @@ class VAELoss(BaseLoss):
     """
     Total loss for VAE training.
     Combines reconstruction loss and KL divergence loss.
-    
+
     Config parameters:
       - reconstruction: dict for ReconstructionLoss config.
       - kl: dict for KLDivergenceLoss config.
       - kl_weight: scaling factor for KL loss (default: 1.0)
     """
+
     def __init__(self, config):
         super(VAELoss, self).__init__(config)
         self.recon_loss_fn = ReconstructionLoss(config)
@@ -205,7 +219,9 @@ class VAELoss(BaseLoss):
         self.kl_weight = torch.tensor(self.config.reg_param, requires_grad=True)
 
     def calculate(self, recon, target, mu, logvar, parameters, log_det_jacobian=0):
-        recon_loss = self.recon_loss_fn.calculate(recon, target, self.loss_type, self.reduction)
+        recon_loss = self.recon_loss_fn.calculate(
+            recon, target, self.loss_type, self.reduction
+        )
         kl_loss = self.kl_loss_fn.calculate(mu, logvar)
         loss = recon_loss[0] + self.kl_weight * kl_loss[0]
         return loss, recon_loss, kl_loss
@@ -218,13 +234,14 @@ class VAEFlowLoss(BaseLoss):
     """
     Loss for VAE models augmented with a normalizing flow.
     Includes the log_det_jacobian term from the flow transformation.
-    
+
     Config parameters:
       - reconstruction: dict for ReconstructionLoss config.
       - kl: dict for KLDivergenceLoss config.
       - kl_weight: weight for the KL divergence term.
       - flow_weight: weight for the log_det_jacobian term.
     """
+
     def __init__(self, config):
         super(VAEFlowLoss, self).__init__(config)
         self.recon_loss_fn = ReconstructionLoss(config)
@@ -235,10 +252,16 @@ class VAEFlowLoss(BaseLoss):
         self.flow_weight = torch.tensor(self.config.reg_param, requires_grad=True)
 
     def calculate(self, recon, target, mu, logvar, parameters, log_det_jacobian=0):
-        recon_loss = self.recon_loss_fn.calculate(recon, target, self.loss_type, self.reduction)
+        recon_loss = self.recon_loss_fn.calculate(
+            recon, target, self.loss_type, self.reduction
+        )
         kl_loss = self.kl_loss_fn.calculate(mu, logvar)
         # Subtract the log-det term (maximizing likelihood).
-        total_loss = recon_loss[0] + self.kl_weight * kl_loss[0] - self.flow_weight * log_det_jacobian
+        total_loss = (
+            recon_loss[0]
+            + self.kl_weight * kl_loss[0]
+            - self.flow_weight * log_det_jacobian
+        )
         return total_loss, recon_loss, kl_loss
 
 
@@ -248,10 +271,11 @@ class VAEFlowLoss(BaseLoss):
 class ContrastiveLoss(BaseLoss):
     """
     Contrastive loss to cluster latent vectors by event generator.
-    
+
     Config parameters:
       - margin: minimum distance desired between dissimilar pairs (default: 1.0)
     """
+
     def __init__(self, config):
         super(ContrastiveLoss, self).__init__(config)
         self.margin = self.config.get("margin", 1.0)
@@ -268,18 +292,18 @@ class ContrastiveLoss(BaseLoss):
         return (loss,)
 
 
-
 # ---------------------------
 # Additional Composite Losses for VAE
 # ---------------------------
 class VAELossEMD(VAELoss):
     """
     VAE loss augmented with an Earth Mover's Distance (EMD) term.
-    
+
     Config parameters:
       - emd_weight: weight for the EMD term.
       - emd: dict for WassersteinLoss config.
     """
+
     def __init__(self, config):
         super(VAELossEMD, self).__init__(config)
         self.emd_weight = self.config.reg_param
@@ -291,7 +315,9 @@ class VAELossEMD(VAELoss):
           - emd_p: first distribution tensor (e.g. a predicted histogram)
           - emd_q: second distribution tensor (e.g. a target histogram)
         """
-        base_loss = super(VAELossEMD, self).calculate(recon, target, mu, logvar, parameters, log_det_jacobian=0)
+        base_loss = super(VAELossEMD, self).calculate(
+            recon, target, mu, logvar, parameters, log_det_jacobian=0
+        )
         vae_loss = sum(base_loss)
         loss, recon_loss, kl_loss = base_loss
         # calculate EMD against eta distributions
@@ -302,13 +328,15 @@ class VAELossEMD(VAELoss):
         loss = base_loss + self.emd_weight * emd_loss
         return loss, vae_loss, recon_loss, kl_loss, emd_loss
 
+
 class VAELossL1(VAELoss):
     """
     VAE loss augmented with an L1 regularization term.
-    
+
     Config parameters:
       - l1_weight: weight for the L1 regularization term.
     """
+
     def __init__(self, config):
         super(VAELossL1, self).__init__(config)
         self.l1_weight = self.config.reg_param
@@ -318,20 +346,24 @@ class VAELossL1(VAELoss):
         """
         'parameters' should be a list of model parameters to regularize.
         """
-        base_loss = super(VAELossL1, self).calculate(recon, target, mu, logvar, parameters, log_det_jacobian=0)
+        base_loss = super(VAELossL1, self).calculate(
+            recon, target, mu, logvar, parameters, log_det_jacobian=0
+        )
         vae_loss = sum(base_loss)
         loss, recon_loss, kl_loss = base_loss
         l1_loss = self.l1_reg_fn.calculate(parameters)
         loss = base_loss + self.l1_weight * l1_loss
         return loss, vae_loss, recon_loss, kl_loss, emd_loss
 
+
 class VAELossL2(VAELoss):
     """
     VAE loss augmented with an L2 regularization term.
-    
+
     Config parameters:
       - l2_weight: weight for the L2 regularization term.
     """
+
     def __init__(self, config):
         super(VAELossL2, self).__init__(config)
         self.l2_weight = self.config.reg_param
@@ -341,12 +373,14 @@ class VAELossL2(VAELoss):
         """
         'parameters' should be a list of model parameters to regularize.
         """
-        base_loss = super(VAELossL2, self).calculate(recon, target, mu, logvar, parameters, log_det_jacobian=0)
+        base_loss = super(VAELossL2, self).calculate(
+            recon, target, mu, logvar, parameters, log_det_jacobian=0
+        )
         vae_loss = sum(base_loss)
         loss, recon_loss, kl_loss = base_loss
         l2_loss = self.l2_reg_fn.calculate(parameters)
         loss = base_loss + self.l2_weight * l2_loss
-        return 
+        return
 
 
 # ---------------------------
@@ -355,11 +389,12 @@ class VAELossL2(VAELoss):
 class VAEFlowLossEMD(VAEFlowLoss):
     """
     VAE loss augmented with an Earth Mover's Distance (EMD) term.
-    
+
     Config parameters:
       - emd_weight: weight for the EMD term.
       - emd: dict for WassersteinLoss config.
     """
+
     def __init__(self, config):
         super(VAEFlowLossEMD, self).__init__(config)
         self.emd_weight = self.config.reg_param
@@ -371,7 +406,9 @@ class VAEFlowLossEMD(VAEFlowLoss):
           - emd_p: first distribution tensor (e.g. a predicted histogram)
           - emd_q: second distribution tensor (e.g. a target histogram)
         """
-        base_loss = super(VAEFlowLossEMD, self).calculate(recon, target, mu, logvar, parameters, log_det_jacobian=0)
+        base_loss = super(VAEFlowLossEMD, self).calculate(
+            recon, target, mu, logvar, parameters, log_det_jacobian=0
+        )
         vae_loss = sum(base_loss)
         loss, recon_loss, kl_loss = base_loss
         # calculate EMD against eta distributions
@@ -382,13 +419,15 @@ class VAEFlowLossEMD(VAEFlowLoss):
         loss = base_loss + self.emd_weight * emd_loss
         return loss, vae_loss, recon_loss, kl_loss, emd_loss
 
+
 class VAEFlowLossL1(VAEFlowLoss):
     """
     VAE loss augmented with an L1 regularization term.
-    
+
     Config parameters:
       - l1_weight: weight for the L1 regularization term.
     """
+
     def __init__(self, config):
         super(VAEFlowLossL1, self).__init__(config)
         self.l1_weight = self.config.reg_param
@@ -398,20 +437,24 @@ class VAEFlowLossL1(VAEFlowLoss):
         """
         'parameters' should be a list of model parameters to regularize.
         """
-        base_loss = super(VAEFlowLossL1, self).calculate(recon, target, mu, logvar, parameters, log_det_jacobian=0)
+        base_loss = super(VAEFlowLossL1, self).calculate(
+            recon, target, mu, logvar, parameters, log_det_jacobian=0
+        )
         vae_loss = sum(base_loss)
         loss, recon_loss, kl_loss = base_loss
         l1_loss = self.l1_reg_fn.calculate(parameters)
         loss = base_loss + self.l1_weight * l1_loss
         return loss, vae_loss, recon_loss, kl_loss, emd_loss
 
+
 class VAEFlowLossL2(VAEFlowLoss):
     """
     VAE loss augmented with an L2 regularization term.
-    
+
     Config parameters:
       - l2_weight: weight for the L2 regularization term.
     """
+
     def __init__(self, config):
         super(VAEFlowLossL2, self).__init__(config)
         self.l2_weight = self.config.reg_param
@@ -421,9 +464,11 @@ class VAEFlowLossL2(VAEFlowLoss):
         """
         'parameters' should be a list of model parameters to regularize.
         """
-        base_loss = super(VAEFlowLossL2, self).calculate(recon, target, mu, logvar, parameters, log_det_jacobian=0)
+        base_loss = super(VAEFlowLossL2, self).calculate(
+            recon, target, mu, logvar, parameters, log_det_jacobian=0
+        )
         vae_loss = sum(base_loss)
         loss, recon_loss, kl_loss = base_loss
         l2_loss = self.l2_reg_fn.calculate(parameters)
         loss = base_loss + self.l2_weight * l2_loss
-        return 
+        return

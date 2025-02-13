@@ -67,11 +67,16 @@ def fit(
 
         # Compute the loss
         losses = loss_fn.calculate(
-            recon=recon, target=inputs, mu=mu, logvar=logvar, parameters=parameters, log_det_jacobian=0
+            recon=recon,
+            target=inputs,
+            mu=mu,
+            logvar=logvar,
+            parameters=parameters,
+            log_det_jacobian=0,
         )
-        
+
         loss, *_ = losses
-        
+
         # Compute the loss-gradient with
         loss.backward()
 
@@ -110,7 +115,12 @@ def validate(config, model, test_dl, loss_fn, reg_param):
 
             # Compute the loss
             losses = loss_fn.calculate(
-                recon=recon, target=inputs, mu=mu, logvar=logvar, parameters=parameters, log_det_jacobian=0
+                recon=recon,
+                target=inputs,
+                mu=mu,
+                logvar=logvar,
+                parameters=parameters,
+                log_det_jacobian=0,
             )
 
             loss, *_ = losses
@@ -187,8 +197,23 @@ def train(
         ]
     ]
     # Reshape tensors to pass to conv layers
-    events_train, jets_train, constituents_train, events_val, jets_val, constituents_val = [
-        x.unsqueeze(1).float() for x in [events_train, jets_train, constituents_train, events_val, jets_val, constituents_val]
+    (
+        events_train,
+        jets_train,
+        constituents_train,
+        events_val,
+        jets_val,
+        constituents_val,
+    ) = [
+        x.unsqueeze(1).float()
+        for x in [
+            events_train,
+            jets_train,
+            constituents_train,
+            events_val,
+            jets_val,
+            constituents_val,
+        ]
     ]
     model = model.to(device)
     if verbose:
@@ -286,7 +311,10 @@ def train(
     # Activate early stopping
     if config.early_stopping:
         if verbose:
-            print("Early stopping is activated with patience of ", config.early_stopping_patience)
+            print(
+                "Early stopping is activated with patience of ",
+                config.early_stopping_patience,
+            )
         early_stopper = helper.EarlyStopping(
             patience=config.early_stopping_patience, min_delta=config.min_delta
         )  # Changes to patience & min_delta can be made in configs
@@ -294,7 +322,10 @@ def train(
     # Activate LR Scheduler
     if config.lr_scheduler:
         if verbose:
-            print("Learning rate scheduler is activated with patience of ", config.lr_scheduler_patience)
+            print(
+                "Learning rate scheduler is activated with patience of ",
+                config.lr_scheduler_patience,
+            )
         lr_scheduler = helper.LRScheduler(
             optimizer=optimizer, patience=config.lr_scheduler_patience
         )
@@ -327,7 +358,7 @@ def train(
         train_loss.append(train_epoch_loss.item())
         train_loss_data.append(train_losses)
 
-        if 1-config.train_size:
+        if 1 - config.train_size:
             val_losses, val_epoch_loss = validate(
                 config=config,
                 model=model,
@@ -371,16 +402,20 @@ def train(
 
     if verbose:
         print(f"Training the model took {(end - start) / 60:.3} minutes")
-    
+
     # Save loss data
-    
+
     np.save(
-        os.path.join(output_path, "results", "epoch_loss_data.npy"), np.array([train_loss, val_loss])
+        os.path.join(output_path, "results", "epoch_loss_data.npy"),
+        np.array([train_loss, val_loss]),
     )
     # np.save(os.path.join(output_path, "results", "train_loss_data.npy"), np.array(converted_train_losses))
     # np.save(os.path.join(output_path, "results", "val_loss_data.npy"), np.array(converted_val_losses))
     if verbose:
-        print("Epoch loss data saved as [train_loss, val_loss] to path: ", os.path.join(output_path, "results", "epoch_loss_data.npy"))
+        print(
+            "Epoch loss data saved as [train_loss, val_loss] to path: ",
+            os.path.join(output_path, "results", "epoch_loss_data.npy"),
+        )
         # print("Loss data saved as [train_losses, val_losses] to path: ", os.path.join(output_path, "results", "loss_data.npy"))
 
     return model

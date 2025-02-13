@@ -439,9 +439,7 @@ class OrthogonalSylvesterVAE(Conv_VAE):
         self.amor_q = nn.Linear(
             self.q_z_mid_dim, self.num_flows * self.z_size * self.num_ortho_vecs
         )
-        self.amor_b = nn.Linear(
-            self.q_z_mid_dim, self.num_flows * self.num_ortho_vecs
-        )
+        self.amor_b = nn.Linear(self.q_z_mid_dim, self.num_flows * self.num_ortho_vecs)
 
         # Normalizing flow layers
         for k in range(self.num_flows):

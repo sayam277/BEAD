@@ -138,10 +138,10 @@ def model_init(in_shape, config):
 
     if config.model_name == "pj_custom":
         model = model_object(*in_shape, z_dim=config.latent_space_size)
-    
+
     else:
         model = model_object(in_shape, z_dim=config.latent_space_size)
-    
+
     if config.model_init == "xavier":
         model.apply(xavier_init_weights)
 
@@ -567,7 +567,7 @@ def load_augment_tensors(folder_path, keyword):
 def select_features(jets_tensor, constituents_tensor, input_features):
     """
     Process the jets_tensor and constituents_tensor based on the input_features flag.
-    
+
     Parameters:
         jets_tensor (torch.Tensor): Tensor with features
             [evt_id, jet_id, num_constituents, b_tagged, jet_pt, jet_eta, jet_phi_sin, jet_phi_cos, generator_id]
@@ -579,30 +579,30 @@ def select_features(jets_tensor, constituents_tensor, input_features):
             - '4momentum': select [pt, eta, phi_sin, phi_cos, generator_id] for both.
             - '4momentum_btag': select [b_tagged, pt, eta, phi_sin, phi_cos, generator_id] for both.
             - 'pj_custom': select everything except [evt_id, jet_id] for jets and except [evt_id, jet_id, constit_id] for constituents.
-    
+
     Returns:
         tuple: Processed jets_tensor and constituents_tensor.
     """
-    
-    if input_features == 'all':
+
+    if input_features == "all":
         # Return tensors unchanged.
         return jets_tensor, constituents_tensor
 
-    elif input_features == '4momentum':
+    elif input_features == "4momentum":
         # For jets: [jet_pt, jet_eta, jet_phi_sin, jet_phi_cos, generator_id] -> indices [4, 5, 6, 7, 8]
         jets_out = jets_tensor[:, 4:]
         # For constituents: [constit_pt, constit_eta, constit_phi_sin, constit_phi_cos, generator_id] -> indices [4, 5, 6, 7, 8]
         constituents_out = constituents_tensor[:, 4:]
         return jets_out, constituents_out
 
-    elif input_features == '4momentum_btag':
+    elif input_features == "4momentum_btag":
         # For jets: [b_tagged, jet_pt, jet_eta, jet_phi_sin, jet_phi_cos, generator_id] -> indices [3, 4, 5, 6, 7, 8]
         jets_out = jets_tensor[:, 3:]
         # For constituents: [b_tagged, constit_pt, constit_eta, constit_phi_sin, constit_phi_cos, generator_id] -> indices [3, 4, 5, 6, 7, 8]
         constituents_out = constituents_tensor[:, 3:]
         return jets_out, constituents_out
 
-    elif input_features == 'pj_custom':
+    elif input_features == "pj_custom":
         # For jets: exclude [evt_id, jet_id] -> remove indices [0, 1]
         jets_out = jets_tensor[:, 2:]  # returns indices 2 to end
         # For constituents: exclude [evt_id, jet_id, constit_id] -> remove indices [0, 1, 2]

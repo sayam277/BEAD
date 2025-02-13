@@ -193,7 +193,7 @@ class CNN_Flow_Layer(nn.Module):
         if (
             self.rescale
         ):  # last layer of flow needs to account for the scale of target variable
-            self.lmbd = nn.Parameter(torch.FloatTensor(self.dim).normal_())#.cuda())
+            self.lmbd = nn.Parameter(torch.FloatTensor(self.dim).normal_())  # .cuda())
 
         self.conv1d = nn.Conv1d(1, 1, kernel_size, dilation=dilation)
 
