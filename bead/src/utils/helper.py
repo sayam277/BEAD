@@ -393,17 +393,14 @@ def load_augment_tensors(folder_path, keyword):
                   "required files not found. please run the --mode convert_csv and prepare inputs before retrying"
     """
     # Check if the keyword is valid
-    if keyword not in ["bkg_train", "bkg_test", "sig_test"]:
+    if keyword not in ["bkg_train", "bkg_test"]:
         raise ValueError(
             "Invalid keyword. Please choose from 'bkg_train', 'bkg_test', or 'sig_test'."
         )
 
     # Define the categories and generator subcategories.
     categories = ["jets", "events", "constituents"]
-    if keyword == "bkg_train":
-        generators = {"herwig": 0, "pythia": 1, "sherpa": 2}
-    elif keyword == "bkg_test" or keyword == "sig_test":
-        generators = {"bkg_test": -1, "sig_test": -2}
+    generators = {"herwig": 0, "pythia": 1, "sherpa": 2}
 
     # Initialize dictionary to store files per category and generator.
     file_categories = {cat: {gen: [] for gen in generators} for cat in categories}

@@ -139,7 +139,6 @@ def get_arguments():
 class Config:
     """Defines a configuration dataclass"""
 
-    input_path: str
     file_type: str
     parallel_workers: int
     num_jets: int
@@ -184,7 +183,6 @@ def create_default_config(workspace_name: str, project_name: str) -> str:
 # === Configuration options ===
 
 def set_config(c):
-    c.input_path                   = "workspaces/{workspace_name}/data/{project_name}_data/"
     c.file_type                    = "h5"
     c.parallel_workers             = 4
     c.num_jets                     = 3
@@ -248,8 +246,8 @@ def create_new_project(
     # Create required directories
     required_directories = [
         os.path.join(workspace_path, "data", "csv"),
-        os.path.join(workspace_path, "data", "h5", "tensors"),
-        os.path.join(workspace_path, "data", "npy", "tensors"),
+        os.path.join(workspace_path, "data", "h5", "tensors", "processed"),
+        os.path.join(workspace_path, "data", "npy", "tensors", "processed"),
         os.path.join(project_path, "config"),
         os.path.join(project_path, "output", "results"),
         os.path.join(project_path, "output", "plots", "training"),
@@ -391,6 +389,51 @@ def prepare_inputs(paths, config, verbose: bool = False):
             )
             sys.exit()
 
+    # Load data from files whose names contain the keyword
+    in_path = output_path
+    out_path = in_path + "/processed"
+    keywords = ["bkg_train", "bkg_test"]
+
+    for keyword in keywords:
+        try:
+            events_tensor, jets_tensor, constituents_tensor = helper.load_augment_tensors(
+                in_path, keyword
+            )
+            if verbose:
+                print("Data augmented successfully")
+                print("Events tensor shape:", events_tensor.shape)
+                print("Jets tensor shape:", jets_tensor.shape)
+                print("Constituents tensor shape:", constituents_tensor.shape)
+            if keyword == "bkg_train":
+                torch.save(events_tensor, out_path + f"/bkg_train_events.pt")
+                torch.save(jets_tensor, out_path + f"/bkg_train_jets.pt")
+                torch.save(constituents_tensor, out_path + f"/bkg_train_constituents.pt")
+            elif keyword == "bkg_test":
+                torch.save(events_tensor, out_path + f"/bkg_test_events.pt")
+                torch.save(jets_tensor, out_path + f"/bkg_test_jets.pt")
+                torch.save(constituents_tensor, out_path + f"/bkg_test_constituents.pt")
+
+        except ValueError as e:
+            print(e)
+            sys.exit(1)
+    
+    keyword = "sig_test"
+    try:
+        events_tensor, jets_tensor, constituents_tensor = helper.load_tensors(
+            in_path, keyword
+        )
+        if verbose:
+            print("Data augmented successfully")
+            print("Events tensor shape:", events_tensor.shape)
+            print("Jets tensor shape:", jets_tensor.shape)
+            print("Constituents tensor shape:", constituents_tensor.shape)
+        torch.save(events_tensor, out_path + f"/sig_test_events.pt")
+        torch.save(jets_tensor, out_path + f"/sig_test_jets.pt")
+        torch.save(constituents_tensor, out_path + f"/sig_test_constituents.pt")
+    except ValueError as e:
+        print(e)
+        sys.exit(1)
+
     end = time.time()
 
     print("Finished preparing and saving input tensors")
@@ -465,28 +508,30 @@ def run_inference(paths, config, verbose: bool = False):
     """
     
     start = time.time()
-    keyword = "bkg_test"
+
+    keyword = "sig_test"
 
     # Preprocess the data for training
     data = data_processing.preproc_inputs(paths, config, keyword, verbose)
 
-    (
-        events_train,
-        jets_train,
-        constituents_train,
-        events_val,
-        jets_val,
-        constituents_val,
-    ) = data
+    # Output path
+    output_path = os.path.join(paths["project_path"], "output")
+    if verbose:
+        print(f"Output path: {output_path}")
 
-    # Calculate the input shapes to initialize the model
-    in_shape = helper.calculate_in_shape(data, config)
+    trained_model = inference.infer(*data, output_path, config, verbose)
 
-    # Load the model
-    model = helper.load_model(
-        os.path.join(paths["project_path"], "output", "models", "model.pt"),
-        verbose = False,
-    )
+    if verbose:
+        print("Training complete")
+
+    end = time.time()
+    if verbose:
+        # Print model save path
+        print(f"Model saved to {os.path.join(output_path, 'models', 'model.pt')}")
+        print("\nThe model has the following structure:")
+        print(trained_model.type)
+        # print time taken in hours
+        print(f"The full training pipeline took: {(end - start) / 3600:.3} hours")
 
 
 
