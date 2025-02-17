@@ -400,17 +400,12 @@ def prepare_inputs(paths, config, verbose: bool = False):
 
 def run_training(paths, config, verbose: bool = False):
     """Main function calling the training functions, ran when --mode=train is selected.
-        The three functions called are: `process`, `ggl.mode_init` and `training.train`.
-
-        Depending on `config.data_dimensions`, the calculated latent space size will differ.
+        The three functions called are: 'data_processing.preproc_inputs' and `training.train`.
 
     Args:
-        output_path (path): Selects base path for determining output path
+        paths (dictionary): Dictionary of common paths used in the pipeline
         config (dataClass): Base class selecting user inputs
         verbose (bool): If True, prints out more information
-
-    Raises:
-        NameError: Baler currently only supports 1D (e.g. HEP) or 2D (e.g. CFD) data as inputs.
     """
     start = time.time()
 
@@ -419,56 +414,12 @@ def run_training(paths, config, verbose: bool = False):
     # Preprocess the data for training
     data = data_processing.preproc_inputs(paths, config, keyword, verbose)
 
-    (
-        events_train,
-        jets_train,
-        constituents_train,
-        events_val,
-        jets_val,
-        constituents_val,
-    ) = data
-
-    # Calculate the input shapes to initialize the model
-    if config.model_name == "pj_ensemble":
-        in_shape_e = [config.batch_size, events_train.shape[1]]
-        in_shape_j = [config.batch_size, jets_train.shape[1], jets_train.shape[2]]
-        in_shape_c = [
-            config.batch_size,
-            constituents_train.shape[1],
-            constituents_train.shape[2],
-        ]
-        # Make in_shape tuple
-        in_shape = (in_shape_e, in_shape_j, in_shape_c)
-
-    else:
-        if config.input_level == "event":
-            in_shape = [config.batch_size, events_train.shape[1]]
-        elif config.input_level == "jet":
-            in_shape = [config.batch_size, jets_train.shape[1], jets_train.shape[2]]
-        elif config.input_level == "constituent":
-            in_shape = [
-                config.batch_size,
-                constituents_train.shape[1],
-                constituents_train.shape[2],
-            ]
-
-    # Instantiate and Initialize the model
-    if verbose:
-        print(f"Intitalizing Model with Latent Size - {config.latent_space_size}")
-    model = helper.model_init(in_shape, config)
-    if verbose:
-        if config.model_init == "xavier":
-            print("Model initialized using Xavier initialization")
-        else:
-            print("Model initialized using default PyTorch initialization")
-        print(f"Model architecture:\n{model}")
-
     # Output path
     output_path = os.path.join(paths["project_path"], "output")
     if verbose:
         print(f"Output path: {output_path}")
 
-    trained_model = training.train(model, *data, output_path, config, verbose)
+    trained_model = training.train(*data, output_path, config, verbose)
 
     if verbose:
         print("Training complete")
@@ -498,61 +449,50 @@ def run_training(paths, config, verbose: bool = False):
         # Print model save path
         print(f"Model saved to {os.path.join(output_path, 'models', 'model.pt')}")
         print("\nThe model has the following structure:")
-        print(model.type)
+        print(trained_model.type)
         # print time taken in hours
         print(f"The full training pipeline took: {(end - start) / 3600:.3} hours")
 
 
-def run_inference(output_path, config):
-    """Function which prints information about your total compression ratios and the file sizes.
+def run_inference(paths, config, verbose: bool = False):
+    """Main function calling the training functions, ran when --mode=train is selected.
+        The three functions called are: `process`, `ggl.mode_init` and `training.train`.
 
-    Args:meta_data
-        output_path (string): Selects path to project from which one wants to obtain file information
+    Args:
+        paths (dictionary): Dictionary of common paths used in the pipeline
         config (dataClass): Base class selecting user inputs
+        verbose (bool): If True, prints out more information
     """
-    print(
-        "================================== \n Information about your compression \n================================== "
+    
+    start = time.time()
+    keyword = "bkg_test"
+
+    # Preprocess the data for training
+    data = data_processing.preproc_inputs(paths, config, keyword, verbose)
+
+    (
+        events_train,
+        jets_train,
+        constituents_train,
+        events_val,
+        jets_val,
+        constituents_val,
+    ) = data
+
+    # Calculate the input shapes to initialize the model
+    in_shape = helper.calculate_in_shape(data, config)
+
+    # Load the model
+    model = helper.load_model(
+        os.path.join(paths["project_path"], "output", "models", "model.pt"),
+        verbose = False,
     )
 
-    original = config.input_path
-    compressed_path = os.path.join(output_path, "compressed_output")
-    decompressed_path = os.path.join(output_path, "decompressed_output")
-    training_path = os.path.join(output_path, "training")
 
-    model = os.path.join(compressed_path, "model.pt")
-    compressed = os.path.join(compressed_path, "compressed.npz")
-    decompressed = os.path.join(decompressed_path, "decompressed.npz")
 
-    meta_data = [
-        model,
-        os.path.join(training_path, "loss_data.npy"),
-        os.path.join(training_path, "normalization_features.npy"),
-    ]
 
-    meta_data_stats = [
-        os.stat(meta_data[file]).st_size / (1024 * 1024)
-        for file in range(len(meta_data))
-    ]
 
-    files = [original, compressed, decompressed]
-    file_stats = [
-        os.stat(files[file]).st_size / (1024 * 1024) for file in range(len(files))
-    ]
 
-    print(
-        f"\nCompressed file is {round(file_stats[1] / file_stats[0], 4) * 100}% the size of the original\n"
-    )
-    print(f"File size before compression: {round(file_stats[0], 4)} MB\n")
-    print(f"Compressed file size: {round(file_stats[1], 4)} MB\n")
-    print(f"De-compressed file size: {round(file_stats[2], 4)} MB\n")
-    print(f"Compression ratio: {round(file_stats[0] / file_stats[1], 4)}\n")
-    print(
-        f"The meta-data saved has a total size of: {round(sum(meta_data_stats),4)} MB\n"
-    )
-    print(
-        f"Combined, the actual compression ratio is: {round((file_stats[0])/(file_stats[1] + sum(meta_data_stats)),4)}"
-    )
-    print("\n ==================================")
 
 
 def run_plots(output_path, config, verbose: bool):

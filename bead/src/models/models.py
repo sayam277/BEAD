@@ -36,6 +36,7 @@ class AE(nn.Module):
         self.activations = {}
         self.n_features = in_shape[-1] * in_shape[-2]
         self.z_dim = z_dim
+        self.in_shape = in_shape
 
         # encoder
         self.en1 = nn.Linear(self.n_features, 200)
@@ -50,16 +51,16 @@ class AE(nn.Module):
         self.dr3 = nn.Dropout(p=0.3)
         self.bn3 = nn.BatchNorm1d(50)
 
-        self.en4 = nn.Linear(50, z_dim)
+        self.en4 = nn.Linear(50, self.z_dim)
         self.dr4 = nn.Dropout(p=0.2)
-        self.bn4 = nn.BatchNorm1d(z_dim)
+        self.bn4 = nn.BatchNorm1d(self.z_dim)
         self.bn5 = nn.BatchNorm1d(self.n_features)
 
         self.leaky_relu = nn.LeakyReLU()
-        self.flatten = nn.Flatten(start_dim=1)
+        self.flatten = nn.Flatten()
 
         # decoder
-        self.de1 = nn.Linear(z_dim, 50)
+        self.de1 = nn.Linear(self.z_dim, 50)
         self.de2 = nn.Linear(50, 100)
         self.de3 = nn.Linear(100, 200)
         self.de4 = nn.Linear(200, self.n_features)
@@ -80,7 +81,8 @@ class AE(nn.Module):
         x = self.flatten(x)
         z = self.encode(x)
         out = self.decode(z)
-        return out, z
+        out = out.view(self.in_shape)
+        return out, z, z, z, z, z
 
     # Implementation of activation extraction using the forward_hook method
 
@@ -150,9 +152,6 @@ class AE_Dropout_BN(AE):
             self.bn5,
         )
 
-        self.n_features = n_features
-        self.z_dim = z_dim
-
     def enc_bn(self, x):
         return self.enc_nn(x)
 
@@ -163,12 +162,13 @@ class AE_Dropout_BN(AE):
         x = self.flatten(x)
         z = self.enc_bn(x)
         out = self.dec_bn(z)
-        return out, z
+        out = out.view(self.in_shape)
+        return out, z, z, z, z, z
 
 
-class Conv_AE(nn.Module):
+class ConvAE(nn.Module):
     def __init__(self, in_shape, z_dim, *args, **kwargs):
-        super(Conv_AE, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.q_z_mid_dim = 100
         self.conv_op_shape = None
@@ -179,13 +179,13 @@ class Conv_AE(nn.Module):
 
         # Conv Layers
         self.q_z_conv = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=(3, 4), stride=(1,), padding=(0)),
+            nn.Conv2d(1, 32, kernel_size=(3, 4), stride=(1,), padding=1),
             nn.BatchNorm2d(32),
             nn.LeakyReLU(),
-            nn.Conv2d(32, 16, kernel_size=(5, 1), stride=(1,), padding=(0)),
+            nn.Conv2d(32, 16, kernel_size=(3, 1), stride=(1,), padding=1),
             nn.BatchNorm2d(16),
             nn.LeakyReLU(),
-            nn.Conv2d(16, 8, kernel_size=(7, 1), stride=(1,), padding=(0)),
+            nn.Conv2d(16, 8, kernel_size=(3, 1), stride=(1,), padding=1),
             nn.BatchNorm2d(8),
         )
 
@@ -221,17 +221,17 @@ class Conv_AE(nn.Module):
         # Conv Layers
         self.p_x_conv = nn.Sequential(
             nn.BatchNorm2d(8),
-            nn.ConvTranspose2d(8, 16, kernel_size=(7, 1), stride=(1), padding=(0)),
+            nn.ConvTranspose2d(8, 16, kernel_size=(3, 1), stride=(1), padding=1),
             nn.BatchNorm2d(16),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(16, 32, kernel_size=(5, 1), stride=(1), padding=(0)),
+            nn.ConvTranspose2d(16, 32, kernel_size=(3, 1), stride=(1), padding=1),
             nn.BatchNorm2d(32),
             nn.LeakyReLU(),
-            nn.ConvTranspose2d(32, 1, kernel_size=(3, 4), stride=(1), padding=(0)),
+            nn.ConvTranspose2d(32, 1, kernel_size=(3, 4), stride=(1), padding=1),
         )
 
     def _get_qzconv_output(self, shape):
-        input = Variable(torch.rand(shape).unsqueeze(1))
+        input = Variable(torch.rand(shape))
         output_feat = self._forward_features(input)
         n_size = output_feat.size(1)
         return int(n_size)
@@ -272,7 +272,7 @@ class Conv_AE(nn.Module):
         return out, z
 
 
-class Conv_VAE(Conv_AE):
+class ConvVAE(ConvAE):
     def __init__(self, in_shape, z_dim, *args, **kwargs):
         super().__init__(in_shape, z_dim, *args, **kwargs)
 
@@ -322,7 +322,7 @@ class Conv_VAE(Conv_AE):
         return out, mean, logvar, self.ldj, z, z
 
 
-class PlanarVAE(Conv_VAE):
+class Planar_ConvVAE(ConvVAE):
     """
     Variational auto-encoder with planar flows in the decoder.
     """
@@ -375,7 +375,7 @@ class PlanarVAE(Conv_VAE):
         return x_decoded, z_mu, z_var, self.log_det_j, z[0], z[-1]
 
 
-class OrthogonalSylvesterVAE(Conv_VAE):
+class OrthogonalSylvester_ConvVAE(ConvVAE):
     """
     Variational auto-encoder with orthogonal flows in the decoder.
     """
@@ -538,7 +538,7 @@ class OrthogonalSylvesterVAE(Conv_VAE):
         return x_decoded, z_mu, z_var, self.log_det_j, z[0], z[-1]
 
 
-class HouseholderSylvesterVAE(Conv_VAE):
+class HouseholderSylvester_ConvVAE(ConvVAE):
     """
     Variational auto-encoder with householder sylvester flows in the decoder.
     """
@@ -677,7 +677,7 @@ class HouseholderSylvesterVAE(Conv_VAE):
         return x_decoded, z_mu, z_var, self.log_det_j, z[0], z[-1]
 
 
-class TriangularSylvesterVAE(Conv_VAE):
+class TriangularSylvester_ConvVAE(ConvVAE):
     """
     Variational auto-encoder with triangular sylvester flows in the decoder.
     """
@@ -785,7 +785,7 @@ class TriangularSylvesterVAE(Conv_VAE):
         return x_decoded, z_mu, z_var, self.log_det_j, z[0], z[-1]
 
 
-class IAFVAE(Conv_VAE):
+class IAF_ConvVAE(ConvVAE):
     """
     Variational auto-encoder with inverse autoregressive flows in the decoder.
     """
@@ -839,7 +839,7 @@ class IAFVAE(Conv_VAE):
         return x_decoded, z_mu, z_var, self.log_det_j, z_0, z_k
 
 
-class ConvFlowVAE(Conv_VAE):
+class ConvFlow_ConvVAE(ConvVAE):
     """
     Variational auto-encoder with convolutional flows in the decoder.
     """
@@ -876,7 +876,7 @@ class ConvFlowVAE(Conv_VAE):
         return x_decoded, z_mu, z_var, self.log_det_j, z_0, z_k
 
 
-class NSF_AR_VAE(Conv_VAE):
+class NSFAR_ConvVAE(ConvVAE):
     """
     Variational auto-encoder with auto-regressive neural spline flows in the decoder.
     """

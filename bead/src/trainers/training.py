@@ -34,7 +34,7 @@ warnings.filterwarnings("ignore", category=TqdmExperimentalWarning)
 def fit(
     config,
     model,
-    train_dl,
+    dataloader,
     loss_fn,
     reg_param,
     optimizer,
@@ -57,10 +57,10 @@ def fit(
 
     running_loss = 0.0
 
-    for idx, inputs in enumerate(tqdm(train_dl)):
-        # Set the gradients to zero
-        optimizer.zero_grad()
-
+    for idx, batch in enumerate(tqdm(dataloader)):
+        
+        inputs, labels = batch
+        
         # Compute the predicted outputs from the input data
         out = helper.call_forward(model, inputs)
         recon, mu, logvar, ldj, z0, zk = out
@@ -77,6 +77,9 @@ def fit(
 
         loss, *_ = losses
 
+        # Set previous gradients to zero
+        optimizer.zero_grad()
+
         # Compute the loss-gradient with
         loss.backward()
 
@@ -90,7 +93,7 @@ def fit(
     return losses, epoch_loss, model
 
 
-def validate(config, model, test_dl, loss_fn, reg_param):
+def validate(config, model, dataloader, loss_fn, reg_param):
     """Function used to validate the training. Not necessary for doing compression, but gives a good indication of wether the model selected is a good fit or not.
     Args:
         model (modelObject): Defines the model one wants to validate. The model used here is passed directly from `fit()`.
@@ -108,7 +111,9 @@ def validate(config, model, test_dl, loss_fn, reg_param):
     running_loss = 0.0
 
     with torch.no_grad():
-        for idx, inputs in enumerate(tqdm(test_dl)):
+        for idx, batch in enumerate(tqdm(dataloader)):
+    
+            inputs, labels = batch
 
             out = helper.call_forward(model, inputs)
             recon, mu, logvar, ldj, z0, zk = out
@@ -143,7 +148,6 @@ def seed_worker(worker_id):
 
 
 def train(
-    model,
     events_train,
     jets_train,
     constituents_train,
@@ -178,6 +182,16 @@ def train(
 
     # Get the device and move tensors to the device
     device = helper.get_device()
+
+    labeled_data = (
+        events_train,
+        jets_train,
+        constituents_train,
+        events_val,
+        jets_val,
+        constituents_val,
+    )
+    
     (
         events_train,
         jets_train,
@@ -187,34 +201,90 @@ def train(
         constituents_val,
     ) = [
         x.to(device)
-        for x in [
-            events_train,
-            jets_train,
-            constituents_train,
-            events_val,
-            jets_val,
-            constituents_val,
-        ]
+        for x in labeled_data
     ]
+
+    # Split data and labels
+    if verbose:
+        print("Splitting data and labels")
+    data, labels = helper.data_label_split(labeled_data)
+
     # Reshape tensors to pass to conv layers
     (
-        events_train,
-        jets_train,
-        constituents_train,
-        events_val,
-        jets_val,
-        constituents_val,
-    ) = [
-        x.unsqueeze(1).float()
-        for x in [
+    events_train,
+    jets_train,
+    constituents_train,
+    events_val,
+    jets_val,
+    constituents_val,
+    ) = data
+
+    (
+    events_train_label,
+    jets_train_label,
+    constituents_train_label,
+    events_val_label,
+    jets_val_label,
+    constituents_val_label,
+    ) = labels
+
+    # Reshape tensors to pass to conv layers
+    if "ConvVAE" in config.model_name:
+        (
             events_train,
             jets_train,
             constituents_train,
             events_val,
             jets_val,
             constituents_val,
+        ) = [
+            x.unsqueeze(1).float()
+            for x in [events_train, jets_train, constituents_train, events_val, jets_val, constituents_val]
         ]
-    ]
+
+        data = (
+            events_train,
+            jets_train,
+            constituents_train,
+            events_val,
+            jets_val,
+            constituents_val,
+        )
+    
+    # Create datasets
+    ds = helper.create_datasets(*data, *labels)
+
+    if verbose:
+        # Print input shapes
+        print("Events - Training set shape:         ", events_train.shape)
+        print("Events - Validation set shape:       ", events_val.shape)
+        print("Jets - Training set shape:           ", jets_train.shape)
+        print("Jets - Validation set shape:         ", jets_val.shape)
+        print("Constituents - Training set shape:   ", constituents_train.shape)
+        print("Constituents - Validation set shape: ", constituents_val.shape)
+
+        # Print label shapes
+        print("Events - Training set labels shape:         ", events_train_label.shape)
+        print("Events - Validation set labels shape:       ", events_val_label.shape)
+        print("Jets - Training set labels shape:           ", jets_train_label.shape)
+        print("Jets - Validation set labels shape:         ", jets_val_label.shape)
+        print("Constituents - Training set labels shape:   ", constituents_train_label.shape)
+        print("Constituents - Validation set labels shape: ", constituents_val_label.shape)
+
+    # Calculate the input shapes to initialize the model
+    in_shape = helper.calculate_in_shape(data, config)
+
+    # Instantiate and Initialize the model
+    if verbose:
+        print(f"Intitalizing Model with Latent Size - {config.latent_space_size}")
+    model = helper.model_init(in_shape, config)
+    if verbose:
+        if config.model_init == "xavier":
+            print("Model initialized using Xavier initialization")
+        else:
+            print("Model initialized using default PyTorch initialization")
+        print(f"Model architecture:\n{model}")
+    
     model = model.to(device)
     if verbose:
         print(f"Device used for training: {device}")
@@ -246,8 +316,9 @@ def train(
                 worker_init_fn=seed_worker,
                 generator=g,
                 drop_last=True,
+                num_workers=config.parallel_workers,
             )
-            for ds in [events_train, jets_train, constituents_train]
+            for ds in [ds["events_train"], ds["jets_train"], ds["constituents_train"]]
         ]
         valid_dl_list = [
             DataLoader(
@@ -257,17 +328,18 @@ def train(
                 worker_init_fn=seed_worker,
                 generator=g,
                 drop_last=True,
+                num_workers=config.parallel_workers,
             )
-            for ds in [events_val, jets_val, constituents_val]
+            for ds in [ds["events_val"], ds["jets_val"], ds["constituents_val"]]
         ]
     else:
         train_dl_list = [
-            DataLoader(ds, batch_size=config.batch_size, shuffle=False, drop_last=True)
-            for ds in [events_train, jets_train, constituents_train]
+            DataLoader(ds, batch_size=config.batch_size, shuffle=False, drop_last=True, num_workers=config.parallel_workers,)
+            for ds in [ds["events_train"], ds["jets_train"], ds["constituents_train"]]
         ]
         valid_dl_list = [
-            DataLoader(ds, batch_size=config.batch_size, shuffle=False, drop_last=True)
-            for ds in [events_val, jets_val, constituents_val]
+            DataLoader(ds, batch_size=config.batch_size, shuffle=False, drop_last=True, num_workers=config.parallel_workers,)
+            for ds in [ds["events_val"], ds["jets_val"], ds["constituents_val"]]
         ]
     # Unpacking the DataLoader lists
     train_dl_events, train_dl_jets, train_dl_constituents = train_dl_list
@@ -350,7 +422,7 @@ def train(
         train_losses, train_epoch_loss, model = fit(
             config=config,
             model=model,
-            train_dl=train_dl,
+            dataloader=train_dl,
             loss_fn=loss_fn,
             reg_param=config.reg_param,
             optimizer=optimizer,
@@ -362,7 +434,7 @@ def train(
             val_losses, val_epoch_loss = validate(
                 config=config,
                 model=model,
-                test_dl=valid_dl,
+                dataloader=valid_dl,
                 loss_fn=loss_fn,
                 reg_param=config.reg_param,
             )

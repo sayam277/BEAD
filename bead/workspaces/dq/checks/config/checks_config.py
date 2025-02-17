@@ -11,9 +11,9 @@ def set_config(c):
     c.normalizations               = "pj_custom"
     c.invert_normalizations        = False
     c.train_size                   = 0.95
-    c.model_name                   = "NSF_AR_VAE"
+    c.model_name                   = "Planar_ConvVAE"
     c.input_level                  = "constituent"
-    c.input_features               = "4momentum"
+    c.input_features               = "4momentum_btag"
     c.model_init                   = "xavier"
     c.loss_function                = "VAEFlowLoss"
     c.optimizer                    = "adamw"

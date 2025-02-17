@@ -51,9 +51,9 @@ class ReconstructionLoss(BaseLoss):
         super(ReconstructionLoss, self).__init__(config)
         self.reg_param = config.reg_param
 
-    def calculate(self, recon, target, loss_type="mse", reduction="mean"):
-        self.loss_type = loss_type
-        self.reduction = reduction
+    def calculate(self, recon, target, mu, logvar, parameters, log_det_jacobian=0):
+        self.loss_type = "mse"
+        self.reduction = "mean"
 
         if self.loss_type == "mse":
             loss = F.mse_loss(recon, target, reduction=self.reduction)
@@ -78,7 +78,7 @@ class KLDivergenceLoss(BaseLoss):
     def __init__(self, config):
         super(KLDivergenceLoss, self).__init__(config)
 
-    def calculate(self, mu, logvar):
+    def calculate(self, recon, target, mu, logvar, parameters, log_det_jacobian=0):
         kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
         batch_size = mu.size(0)
         return (kl_loss / batch_size,)
@@ -172,7 +172,7 @@ class BinaryCrossEntropyLoss(BaseLoss):
         self.use_logits = self.config.get("use_logits", True)
         self.reduction = self.config.get("reduction", "mean")
 
-    def calculate(self, predictions, targets):
+    def calculate(self, predictions, targets, mu, logvar, parameters, log_det_jacobian=0):
         """
         Calculate the binary cross entropy loss.
 
@@ -220,9 +220,9 @@ class VAELoss(BaseLoss):
 
     def calculate(self, recon, target, mu, logvar, parameters, log_det_jacobian=0):
         recon_loss = self.recon_loss_fn.calculate(
-            recon, target, self.loss_type, self.reduction
+            recon, target, mu, logvar, parameters, log_det_jacobian=0
         )
-        kl_loss = self.kl_loss_fn.calculate(mu, logvar)
+        kl_loss = self.kl_loss_fn.calculate(recon, target, mu, logvar, parameters, log_det_jacobian=0)
         loss = recon_loss[0] + self.kl_weight * kl_loss[0]
         return loss, recon_loss, kl_loss
 
@@ -253,9 +253,9 @@ class VAEFlowLoss(BaseLoss):
 
     def calculate(self, recon, target, mu, logvar, parameters, log_det_jacobian=0):
         recon_loss = self.recon_loss_fn.calculate(
-            recon, target, self.loss_type, self.reduction
+            recon, target, mu, logvar, parameters, log_det_jacobian=0
         )
-        kl_loss = self.kl_loss_fn.calculate(mu, logvar)
+        kl_loss = self.kl_loss_fn.calculate(recon, target, mu, logvar, parameters, log_det_jacobian=0)
         # Subtract the log-det term (maximizing likelihood).
         total_loss = (
             recon_loss[0]

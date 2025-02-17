@@ -4,6 +4,7 @@ import numpy as np
 import os
 import torch
 import torch.nn as nn
+from torch.utils.data import Dataset
 from numpy import ndarray
 from sklearn.model_selection import train_test_split
 
@@ -111,86 +112,6 @@ def decoder_saver(model, model_path: str) -> None:
         None: Saved decoder state dictionary as `.pt` file.
     """
     torch.save(model.decoder.state_dict(), model_path)
-
-
-def model_init(in_shape, config):
-    """Initializing the models attributes to a model_object variable.
-
-    Args:
-        model_name (str): The name of the model you wish to initialize. This should correspond to what your Model name.
-        init (str): The initialization method you wish to use (Xavier support currently). Default is None.
-
-    Returns:
-        class: Object with the models class attributes
-    """
-
-    def xavier_init_weights(m):
-        """
-        Applies Xavier initialization to the weights of the given module.
-        """
-        if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
-            nn.init.xavier_uniform_(m.weight)
-            if m.bias is not None:
-                nn.init.zeros_(m.bias)
-
-    model_object = getattr(models, config.model_name)
-    print(in_shape)
-
-    if config.model_name == "pj_custom":
-        model = model_object(*in_shape, z_dim=config.latent_space_size)
-
-    else:
-        model = model_object(in_shape, z_dim=config.latent_space_size)
-
-    if config.model_init == "xavier":
-        model.apply(xavier_init_weights)
-
-    return model
-
-
-def get_loss(loss_function: str):
-    """Returns the loss_object based on the string provided.
-
-    Args:
-        loss_function (str): The loss function you wish to use. Options include:
-            - 'mse': Mean Squared Error
-            - 'bce': Binary Cross Entropy
-            - 'mae': Mean Absolute Error
-            - 'huber': Huber Loss
-            - 'l1': L1 Loss
-            - 'l2': L2 Loss
-            - 'smoothl1': Smooth L1 Loss
-
-    Returns:
-        class: The loss function object
-    """
-    loss_object = getattr(loss, loss_function)
-
-    return loss_object
-
-
-def load_model(model_object, model_path: str, n_features: int, z_dim: int):
-    """Loads the state dictionary of the trained model into a model variable. This variable is then used for passing
-    data through the encoding and decoding functions.
-
-    Args:
-        model_object (object): Object with the models attributes
-        model_path (str): Path to model
-        n_features (int): Input dimension size
-        z_dim (int): Latent space size
-
-    Returns: nn.Module: Returns a model object with the attributes of the model class, with the selected state
-    dictionary loaded into it.
-    """
-    device = get_device()
-    model = model_object(n_features, z_dim)
-    model.to(device)
-
-    # Loading the state_dict into the model
-    model.load_state_dict(
-        torch.load(str(model_path), map_location=device), strict=False
-    )
-    return model
 
 
 class Log1pScaler(BaseEstimator, TransformerMixin):
@@ -479,8 +400,10 @@ def load_augment_tensors(folder_path, keyword):
 
     # Define the categories and generator subcategories.
     categories = ["jets", "events", "constituents"]
-    generators = {"herwig": 0, "pythia": 1, "sherpa": 2}
-    labels = {"bkg_test": -1, "sig_test": -2}
+    if keyword == "bkg_train":
+        generators = {"herwig": 0, "pythia": 1, "sherpa": 2}
+    elif keyword == "bkg_test" or keyword == "sig_test":
+        generators = {"bkg_test": -1, "sig_test": -2}
 
     # Initialize dictionary to store files per category and generator.
     file_categories = {cat: {gen: [] for gen in generators} for cat in categories}
@@ -590,23 +513,23 @@ def select_features(jets_tensor, constituents_tensor, input_features):
 
     elif input_features == "4momentum":
         # For jets: [jet_pt, jet_eta, jet_phi_sin, jet_phi_cos, generator_id] -> indices [4, 5, 6, 7, 8]
-        jets_out = jets_tensor[:, 4:]
+        jets_out = jets_tensor[:, :, 4:]
         # For constituents: [constit_pt, constit_eta, constit_phi_sin, constit_phi_cos, generator_id] -> indices [4, 5, 6, 7, 8]
-        constituents_out = constituents_tensor[:, 4:]
+        constituents_out = constituents_tensor[:, :, 4:]
         return jets_out, constituents_out
 
     elif input_features == "4momentum_btag":
         # For jets: [b_tagged, jet_pt, jet_eta, jet_phi_sin, jet_phi_cos, generator_id] -> indices [3, 4, 5, 6, 7, 8]
-        jets_out = jets_tensor[:, 3:]
+        jets_out = jets_tensor[:, :, 3:]
         # For constituents: [b_tagged, constit_pt, constit_eta, constit_phi_sin, constit_phi_cos, generator_id] -> indices [3, 4, 5, 6, 7, 8]
-        constituents_out = constituents_tensor[:, 3:]
+        constituents_out = constituents_tensor[:, :, 3:]
         return jets_out, constituents_out
 
     elif input_features == "pj_custom":
         # For jets: exclude [evt_id, jet_id] -> remove indices [0, 1]
-        jets_out = jets_tensor[:, 2:]  # returns indices 2 to end
+        jets_out = jets_tensor[:, :, 2:]  # returns indices 2 to end
         # For constituents: exclude [evt_id, jet_id, constit_id] -> remove indices [0, 1, 2]
-        constituents_out = constituents_tensor[:, 3:]  # returns indices 3 to end
+        constituents_out = constituents_tensor[:, :, 3:]  # returns indices 3 to end
         return jets_out, constituents_out
 
     else:
@@ -655,7 +578,183 @@ def train_val_split(tensor, train_ratio):
     return train_tensor, val_tensor
 
 
-import torch
+def data_label_split(data):
+    """Splits the data into features and labels.
+
+    Args:
+        data (ndarray): The data you wish to split into features and labels.
+
+    Returns:
+        tuple: A tuple containing two ndarrays:
+            - data: The features of the data.
+            - labels: The labels of the data.
+    """
+    (
+        events_train,
+        jets_train,
+        constituents_train,
+        events_val,
+        jets_val,
+        constituents_val,
+    ) = data
+    
+    data = (
+        events_train[:,:-1],
+        jets_train[:,:,:-1],
+        constituents_train[:,:,:-1],
+        events_val[:,:-1],
+        jets_val[:,:,:-1],
+        constituents_val[:,:,:-1],
+    )
+
+    labels = (
+        events_train[:,-1],
+        jets_train[:,0,-1].squeeze(),
+        constituents_train[:,0,-1].squeeze(),
+        events_val[:,-1],
+        jets_val[:,0,-1].squeeze(),
+        constituents_val[:,0,-1].squeeze(),
+    )
+    return data, labels
+
+
+# Define the custom dataset class
+class CustomDataset(Dataset):
+    def __init__(self, data_tensor, label_tensor):
+        self.data = data_tensor
+        self.labels = label_tensor
+        
+    def __len__(self):
+        return len(self.data)
+    
+    def __getitem__(self, idx):
+        return self.data[idx], self.labels[idx]
+
+# Function to create datasets
+def create_datasets(
+    events_train, jets_train, constituents_train,
+    events_val, jets_val, constituents_val,
+    events_train_label, jets_train_label, constituents_train_label,
+    events_val_label, jets_val_label, constituents_val_label
+):
+
+    # Create datasets for training data
+    events_train_dataset = CustomDataset(events_train, events_train_label)
+    jets_train_dataset = CustomDataset(jets_train, jets_train_label)
+    constituents_train_dataset = CustomDataset(constituents_train, constituents_train_label)
+
+    # Create datasets for validation data
+    events_val_dataset = CustomDataset(events_val, events_val_label)
+    jets_val_dataset = CustomDataset(jets_val, jets_val_label)
+    constituents_val_dataset = CustomDataset(constituents_val, constituents_val_label)
+
+    # Return all datasets as a dictionary for easy access
+    datasets = {
+        "events_train": events_train_dataset,
+        "jets_train": jets_train_dataset,
+        "constituents_train": constituents_train_dataset,
+        "events_val": events_val_dataset,
+        "jets_val": jets_val_dataset,
+        "constituents_val": constituents_val_dataset,
+    }
+    return datasets
+
+
+def calculate_in_shape(data, config):
+    """Calculates the input shapes for the models based on the data.
+
+    Args:
+        data (ndarray): The data you wish to calculate the input shapes for.
+        config (dataClass): Base class selecting user inputs.
+
+    Returns:
+        tuple: A tuple containing the input shapes for the models.
+    """
+    (
+        events_train,
+        jets_train,
+        constituents_train,
+        events_val,
+        jets_val,
+        constituents_val,
+    ) = data
+
+    # Get the shapes of the data
+    # Calculate the input shapes to initialize the model
+    
+    in_shape_e = [config.batch_size] + list(events_train.shape[1:])
+    in_shape_j = [config.batch_size] + list(jets_train.shape[1:])
+    in_shape_c = [config.batch_size] + list(constituents_train.shape[1:])
+    
+    if config.model_name == "pj_ensemble":        
+        # Make in_shape tuple
+        in_shape = (in_shape_e, in_shape_j, in_shape_c)
+
+    else:
+        if config.input_level == "event":
+            in_shape = in_shape_e
+        elif config.input_level == "jet":
+            in_shape = in_shape_j
+        elif config.input_level == "constituent":
+            in_shape = in_shape_c
+
+    return in_shape
+
+
+def model_init(in_shape, config):
+    """Initializing the models attributes to a model_object variable.
+
+    Args:
+        model_name (str): The name of the model you wish to initialize. This should correspond to what your Model name.
+        init (str): The initialization method you wish to use (Xavier support currently). Default is None.
+        config (dataClass): Base class selecting user inputs.
+
+    Returns:
+        class: Object with the models class attributes
+    """
+
+    def xavier_init_weights(m):
+        """
+        Applies Xavier initialization to the weights of the given module.
+        """
+        if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
+            nn.init.xavier_uniform_(m.weight)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+
+    model_object = getattr(models, config.model_name)
+
+    if config.model_name == "pj_custom":
+        model = model_object(*in_shape, z_dim=config.latent_space_size)
+
+    else:
+        model = model_object(in_shape, z_dim=config.latent_space_size)
+
+    if config.model_init == "xavier":
+        model.apply(xavier_init_weights)
+
+    return model
+
+
+def get_loss(loss_function: str):
+    """Returns the loss_object based on the string provided.
+
+    Args:
+        loss_function (str): The loss function you wish to use. Options include:
+            - 'mse': Mean Squared Error
+            - 'bce': Binary Cross Entropy
+            - 'mae': Mean Absolute Error
+            - 'huber': Huber Loss
+            - 'l1': L1 Loss
+            - 'l2': L2 Loss
+            - 'smoothl1': Smooth L1 Loss
+
+    Returns:
+        class: The loss function object
+    """
+    loss_object = getattr(loss, loss_function)
+
+    return loss_object
 
 
 def get_optimizer(optimizer_name, parameters, lr):
@@ -822,3 +921,27 @@ class LRScheduler:
 
     def __call__(self, loss):
         self.lr_scheduler.step(loss)
+
+
+def load_model(model_object, model_path: str, n_features: int, z_dim: int):
+    """Loads the state dictionary of the trained model into a model variable. This variable is then used for passing
+    data through the encoding and decoding functions.
+
+    Args:
+        model_object (object): Object with the models attributes
+        model_path (str): Path to model
+        n_features (int): Input dimension size
+        z_dim (int): Latent space size
+
+    Returns: nn.Module: Returns a model object with the attributes of the model class, with the selected state
+    dictionary loaded into it.
+    """
+    device = get_device()
+    model = model_object(n_features, z_dim)
+    model.to(device)
+
+    # Loading the state_dict into the model
+    model.load_state_dict(
+        torch.load(str(model_path), map_location=device), strict=False
+    )
+    return model
