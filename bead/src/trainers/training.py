@@ -60,7 +60,9 @@ def fit(
     for idx, batch in enumerate(tqdm(dataloader)):
         
         inputs, labels = batch
-        
+        # Set previous gradients to zero
+        optimizer.zero_grad()
+
         # Compute the predicted outputs from the input data
         out = helper.call_forward(model, inputs)
         recon, mu, logvar, ldj, z0, zk = out
@@ -76,9 +78,6 @@ def fit(
         )
 
         loss, *_ = losses
-
-        # Set previous gradients to zero
-        optimizer.zero_grad()
 
         # Compute the loss-gradient with
         loss.backward()
