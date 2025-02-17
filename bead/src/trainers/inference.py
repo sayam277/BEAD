@@ -21,7 +21,7 @@ from tqdm.rich import tqdm
 
 from torch.nn import functional as F
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 
 from src.utils import helper, loss, diagnostics
 
@@ -29,111 +29,6 @@ import warnings
 from tqdm import TqdmExperimentalWarning
 
 warnings.filterwarnings("ignore", category=TqdmExperimentalWarning)
-
-
-def fit(
-    config,
-    model,
-    dataloader,
-    loss_fn,
-    reg_param,
-    optimizer,
-):
-    """This function trains the model on the train set. It computes the losses and does the backwards propagation, and updates the optimizer as well.
-    Args:
-        config (dataClass): Base class selecting user inputs
-        model (modelObject): The model you wish to train
-        train_dl (torch.DataLoader): Defines the batched data which the model is trained on
-        loss (lossObject): Defines the loss function used to train the model
-        reg_param (float): Determines proportionality constant to balance different components of the loss.
-        optimizer (torch.optim): Chooses optimizer for gradient descent.
-    Returns:
-        list, model object: Training losses, Epoch_loss and trained model
-    """
-    # Extract model parameters
-    parameters = model.parameters()
-
-    model.train()
-
-    running_loss = 0.0
-
-    for idx, batch in enumerate(tqdm(dataloader)):
-        
-        inputs, labels = batch
-        # Set previous gradients to zero
-        optimizer.zero_grad()
-
-        # Compute the predicted outputs from the input data
-        out = helper.call_forward(model, inputs)
-        recon, mu, logvar, ldj, z0, zk = out
-
-        # Compute the loss
-        losses = loss_fn.calculate(
-            recon=recon,
-            target=inputs,
-            mu=mu,
-            logvar=logvar,
-            parameters=parameters,
-            log_det_jacobian=0,
-        )
-
-        loss, *_ = losses
-
-        # Compute the loss-gradient with
-        loss.backward()
-
-        # Update the optimizer
-        optimizer.step()
-
-        running_loss += loss
-
-    epoch_loss = running_loss / (idx + 1)
-    print(f"# Training Loss: {epoch_loss:.6f}")
-    return losses, epoch_loss, model
-
-
-def validate(config, model, dataloader, loss_fn, reg_param):
-    """Function used to validate the training. Not necessary for doing compression, but gives a good indication of wether the model selected is a good fit or not.
-    Args:
-        model (modelObject): Defines the model one wants to validate. The model used here is passed directly from `fit()`.
-        test_dl (torch.DataLoader): Defines the batched data which the model is validated on
-        model_children (list): List of model parameters
-        reg_param (float): Determines proportionality constant to balance different components of the loss.
-    Returns:
-        float: Validation loss
-    """
-    # Extract model parameters
-    parameters = model.parameters()
-
-    model.eval()
-
-    running_loss = 0.0
-
-    with torch.no_grad():
-        for idx, batch in enumerate(tqdm(dataloader)):
-    
-            inputs, labels = batch
-
-            out = helper.call_forward(model, inputs)
-            recon, mu, logvar, ldj, z0, zk = out
-
-            # Compute the loss
-            losses = loss_fn.calculate(
-                recon=recon,
-                target=inputs,
-                mu=mu,
-                logvar=logvar,
-                parameters=parameters,
-                log_det_jacobian=0,
-            )
-
-            loss, *_ = losses
-
-            running_loss += loss
-
-        epoch_loss = running_loss / (idx + 1)
-        print(f"# Validation Loss: {epoch_loss:.6f}")
-    return losses, epoch_loss
 
 
 def seed_worker(worker_id):
@@ -146,13 +41,14 @@ def seed_worker(worker_id):
     random.seed(worker_seed)
 
 
-def train(
-    events_train,
-    jets_train,
-    constituents_train,
-    events_val,
-    jets_val,
-    constituents_val,
+def infer(
+    events_bkg,
+    jets_bkg,
+    constituents_bkg,
+    events_sig,
+    jets_sig,
+    constituents_sig,
+    model_path,
     output_path,
     config,
     verbose: bool = False,
@@ -170,34 +66,34 @@ def train(
     Returns:
         modelObject: fully trained model ready to perform compression and decompression
     """
-
+    # Print input shapes
     if verbose:
-        print("Events - Training set size:         ", events_train.size(0))
-        print("Events - Validation set size:       ", events_val.size(0))
-        print("Jets - Training set size:           ", jets_train.size(0))
-        print("Jets - Validation set size:         ", jets_val.size(0))
-        print("Constituents - Training set size:   ", constituents_train.size(0))
-        print("Constituents - Validation set size: ", constituents_val.size(0))
+        print("Events - bkg shape:         ", events_bkg.shape)
+        print("Jets - bkg shape:           ", jets_bkg.shape)
+        print("Constituents - bkg shape:   ", constituents_bkg.shape)
+        print("Events - sig shape:         ", events_sig.shape)
+        print("Jets - sig shape:           ", jets_sig.shape)
+        print("Constituents - sig shape:   ", constituents_sig.shape)
 
     # Get the device and move tensors to the device
     device = helper.get_device()
 
     labeled_data = (
-        events_train,
-        jets_train,
-        constituents_train,
-        events_val,
-        jets_val,
-        constituents_val,
+        events_bkg,
+        jets_bkg,
+        constituents_bkg,
+        events_sig,
+        jets_sig,
+        constituents_sig,
     )
     
     (
-        events_train,
-        jets_train,
-        constituents_train,
-        events_val,
-        jets_val,
-        constituents_val,
+        events_bkg,
+        jets_bkg,
+        constituents_bkg,
+        events_sig,
+        jets_sig,
+        constituents_sig,
     ) = [
         x.to(device)
         for x in labeled_data
@@ -210,88 +106,90 @@ def train(
 
     # Reshape tensors to pass to conv layers
     (
-    events_train,
-    jets_train,
-    constituents_train,
-    events_val,
-    jets_val,
-    constituents_val,
+    events_bkg,
+    jets_bkg,
+    constituents_bkg,
+    events_sig,
+    jets_sig,
+    constituents_sig,
     ) = data
 
     (
-    events_train_label,
-    jets_train_label,
-    constituents_train_label,
-    events_val_label,
-    jets_val_label,
-    constituents_val_label,
+    events_bkg_label,
+    jets_bkg_label,
+    constituents_bkg_label,
+    events_sig_label,
+    jets_sig_label,
+    constituents_sig_label,
     ) = labels
 
     # Reshape tensors to pass to conv layers
-    if "ConvVAE" in config.model_name:
+    if "ConvVAE" in config.model_name or "ConvAE" in config.model_name:
         (
-            events_train,
-            jets_train,
-            constituents_train,
-            events_val,
-            jets_val,
-            constituents_val,
+            events_bkg,
+            jets_bkg,
+            constituents_bkg,
+            events_sig,
+            jets_sig,
+            constituents_sig,
         ) = [
             x.unsqueeze(1).float()
-            for x in [events_train, jets_train, constituents_train, events_val, jets_val, constituents_val]
+            for x in [events_bkg, jets_bkg, constituents_bkg, events_sig, jets_sig, constituents_sig]
         ]
 
         data = (
-            events_train,
-            jets_train,
-            constituents_train,
-            events_val,
-            jets_val,
-            constituents_val,
+            events_bkg,
+            jets_bkg,
+            constituents_bkg,
+            events_sig,
+            jets_sig,
+            constituents_sig,
         )
     
     # Create datasets
     ds = helper.create_datasets(*data, *labels)
 
+    # Concatenate events, jets and constituents respectively
+    ds_events = ConcatDataset([ds["events_train"], ds["events_val"]])
+    ds_jets = ConcatDataset([ds["jets_train"], ds["jets_val"]])
+    ds_constituents = ConcatDataset([ds["constituents_train"], ds["constituents_val"]])
+    ds = {
+        "events": ds_events,
+        "jets": ds_jets,
+        "constituents": ds_constituents,
+    }
+
     if verbose:
         # Print input shapes
-        print("Events - Training set shape:         ", events_train.shape)
-        print("Events - Validation set shape:       ", events_val.shape)
-        print("Jets - Training set shape:           ", jets_train.shape)
-        print("Jets - Validation set shape:         ", jets_val.shape)
-        print("Constituents - Training set shape:   ", constituents_train.shape)
-        print("Constituents - Validation set shape: ", constituents_val.shape)
+        print("Events - bkg shape:         ", events_bkg.shape)
+        print("Jets - bkg shape:           ", jets_bkg.shape)
+        print("Constituents - bkg shape:   ", constituents_bkg.shape)
+        print("Events - sig shape:         ", events_sig.shape)
+        print("Jets - sig shape:           ", jets_sig.shape)
+        print("Constituents - sig shape:   ", constituents_sig.shape)
 
         # Print label shapes
-        print("Events - Training set labels shape:         ", events_train_label.shape)
-        print("Events - Validation set labels shape:       ", events_val_label.shape)
-        print("Jets - Training set labels shape:           ", jets_train_label.shape)
-        print("Jets - Validation set labels shape:         ", jets_val_label.shape)
-        print("Constituents - Training set labels shape:   ", constituents_train_label.shape)
-        print("Constituents - Validation set labels shape: ", constituents_val_label.shape)
+        print("Events - bkg labels shape:         ", events_bkg_label.shape)
+        print("Jets - bkg labels shape:           ", jets_bkg_label.shape)
+        print("Constituents - bkg labels shape:   ", constituents_bkg_label.shape)
+        print("Events - sig labels shape:         ", events_sig_label.shape)
+        print("Jets - sig labels shape:           ", jets_sig_label.shape)
+        print("Constituents - sig labels shape:   ", constituents_sig_label.shape)
 
-    # Calculate the input shapes to initialize the model
+    # Calculate the input shapes to load the model
     in_shape = helper.calculate_in_shape(data, config)
 
-    # Instantiate and Initialize the model
-    if verbose:
-        print(f"Intitalizing Model with Latent Size - {config.latent_space_size}")
-    model = helper.model_init(in_shape, config)
-    if verbose:
-        if config.model_init == "xavier":
-            print("Model initialized using Xavier initialization")
-        else:
-            print("Model initialized using default PyTorch initialization")
-        print(f"Model architecture:\n{model}")
+    # Load the model and set to eval mode for inference
+    model = helper.load_model(model_path=model_path, in_shape=in_shape, config=config)
+    model.eval()
     
-    model = model.to(device)
     if verbose:
-        print(f"Device used for training: {device}")
+        print(f"Model loaded from {model_path}")
+        print(f"Model architecture:\n{model}")
+        print(f"Device used for inference: {device}")
         print(f"Inputs and model moved to device")
-
-    # Pushing input data into the torch-DataLoader object and combines into one DataLoader object (a basic wrapper
-    # around several DataLoader objects).
-    if verbose:
+        # Pushing input data into the torch-DataLoader object and combines into one DataLoader object (a basic wrapper
+        # around several DataLoader objects).
         print(
             "Loading data into DataLoader and using batch size of ", config.batch_size
         )
@@ -307,7 +205,7 @@ def train(
         g = torch.Generator()
         g.manual_seed(0)
 
-        train_dl_list = [
+        test_dl_list = [
             DataLoader(
                 ds,
                 batch_size=config.batch_size,
@@ -317,46 +215,28 @@ def train(
                 drop_last=True,
                 num_workers=config.parallel_workers,
             )
-            for ds in [ds["events_train"], ds["jets_train"], ds["constituents_train"]]
+            for ds in [ds["events"], ds["jets"], ds["constituents"]]
         ]
-        valid_dl_list = [
-            DataLoader(
-                ds,
-                batch_size=config.batch_size,
-                shuffle=False,
-                worker_init_fn=seed_worker,
-                generator=g,
-                drop_last=True,
-                num_workers=config.parallel_workers,
-            )
-            for ds in [ds["events_val"], ds["jets_val"], ds["constituents_val"]]
-        ]
+        
     else:
-        train_dl_list = [
+        test_dl_list = [
             DataLoader(ds, batch_size=config.batch_size, shuffle=False, drop_last=True, num_workers=config.parallel_workers,)
-            for ds in [ds["events_train"], ds["jets_train"], ds["constituents_train"]]
+            for ds in [ds["events"], ds["jets"], ds["constituents"]]
         ]
-        valid_dl_list = [
-            DataLoader(ds, batch_size=config.batch_size, shuffle=False, drop_last=True, num_workers=config.parallel_workers,)
-            for ds in [ds["events_val"], ds["jets_val"], ds["constituents_val"]]
-        ]
+        
     # Unpacking the DataLoader lists
-    train_dl_events, train_dl_jets, train_dl_constituents = train_dl_list
-    val_dl_events, val_dl_jets, val_dl_constituents = valid_dl_list
+    test_dl_events, test_dl_jets, test_dl_constituents = test_dl_list
 
     if config.model_name == "pj_ensemble":
         if verbose:
             print("Model is an ensemble model")
     else:
         if config.input_level == "event":
-            train_dl = train_dl_events
-            valid_dl = val_dl_events
+            test_dl = test_dl_events
         elif config.input_level == "jet":
-            train_dl = train_dl_jets
-            valid_dl = val_dl_jets
+            test_dl = test_dl_jets
         elif config.input_level == "constituent":
-            train_dl = train_dl_constituents
-            valid_dl = val_dl_constituents
+            test_dl = test_dl_constituents
         if verbose:
             print(f"Input data is of {config.input_level} level")
 
@@ -369,43 +249,15 @@ def train(
     except ValueError as e:
         print(e)
 
-    # Select Optimizer
-    try:
-        optimizer = helper.get_optimizer(
-            config.optimizer, model.parameters(), lr=config.lr
-        )
-        if verbose:
-            print(f"Optimizer: {config.optimizer}")
-    except ValueError as e:
-        print(e)
+    # Output Lists
+    test_loss_data = []
+    reconstructed_data = []
+    mu_data = []
+    logvar_data = []
+    z0_data = []
+    zk_data = []
+    log_det_jacobian_data = []
 
-    # Activate early stopping
-    if config.early_stopping:
-        if verbose:
-            print(
-                "Early stopping is activated with patience of ",
-                config.early_stopping_patience,
-            )
-        early_stopper = helper.EarlyStopping(
-            patience=config.early_stopping_patience, min_delta=config.min_delta
-        )  # Changes to patience & min_delta can be made in configs
-
-    # Activate LR Scheduler
-    if config.lr_scheduler:
-        if verbose:
-            print(
-                "Learning rate scheduler is activated with patience of ",
-                config.lr_scheduler_patience,
-            )
-        lr_scheduler = helper.LRScheduler(
-            optimizer=optimizer, patience=config.lr_scheduler_patience
-        )
-
-    # Training and Validation of the model
-    train_loss_data = []
-    val_loss_data = []
-    train_loss = []
-    val_loss = []
     start = time.time()
 
     # Registering hooks for activation extraction
@@ -413,55 +265,36 @@ def train(
         hooks = model.store_hooks()
 
     if verbose:
-        print(f"Beginning training for {config.epochs} epochs")
+        print(f"Beginning Inference")
 
-    for epoch in range(config.epochs):
-        print(f"Epoch {epoch + 1} / {config.epochs}")
+    # Inference
+    parameters = model.parameters()
 
-        train_losses, train_epoch_loss, model = fit(
-            config=config,
-            model=model,
-            dataloader=train_dl,
-            loss_fn=loss_fn,
-            reg_param=config.reg_param,
-            optimizer=optimizer,
-        )
-        train_loss.append(train_epoch_loss.item())
-        train_loss_data.append(train_losses)
+    with torch.no_grad():
+        for idx, batch in enumerate(tqdm(test_dl)):
+    
+            inputs, labels = batch
 
-        if 1 - config.train_size:
-            val_losses, val_epoch_loss = validate(
-                config=config,
-                model=model,
-                dataloader=valid_dl,
-                loss_fn=loss_fn,
-                reg_param=config.reg_param,
+            out = helper.call_forward(model, inputs)
+            recon, mu, logvar, ldj, z0, zk = out
+
+            # Compute the loss
+            losses = loss_fn.calculate(
+                recon=recon,
+                target=inputs,
+                mu=mu,
+                logvar=logvar,
+                parameters=parameters,
+                log_det_jacobian=0,
             )
-            val_loss.append(val_epoch_loss.item())
-            val_loss_data.append(val_losses)
-        else:
-            val_epoch_loss = train_epoch_loss
-            val_losses = train_losses
-            val_loss.append(val_epoch_loss)
-            val_loss_data.append(val_losses)
 
-        # Implementing LR Scheduler
-        if config.lr_scheduler:
-            lr_scheduler(val_epoch_loss)
-
-        ## Implementation to save models & values after every N config.epochs, where N is stored in 'config.intermittent_saving_patience':
-        if config.intermittent_model_saving:
-            if epoch % config.intermittent_saving_patience == 0:
-                path = os.path.join(output_path, "models", f"model_{epoch}.pt")
-                helper.model_saver(model, path)
-
-        # Implementing Early Stopping
-        if config.early_stopping:
-            early_stopper(val_epoch_loss)
-            if early_stopper.early_stop:
-                if verbose:
-                    print("Early stopping activated at epoch ", epoch)
-                break
+            test_loss_data.append(losses)
+            reconstructed_data.append(recon)
+            mu_data.append(mu)
+            logvar_data.append(logvar)
+            log_det_jacobian_data.append(ldj)
+            z0_data.append(z0)
+            zk_data.append(zk)
 
     end = time.time()
 
@@ -474,19 +307,31 @@ def train(
     if verbose:
         print(f"Training the model took {(end - start) / 60:.3} minutes")
 
-    # Save loss data
-
+    # Save all the data
     np.save(
-        os.path.join(output_path, "results", "epoch_loss_data.npy"),
-        np.array([train_loss, val_loss]),
+        os.path.join(output_path, "results", "reconstructed_data.npy"),
+        np.array(reconstructed_data),
     )
-    # np.save(os.path.join(output_path, "results", "train_loss_data.npy"), np.array(converted_train_losses))
-    # np.save(os.path.join(output_path, "results", "val_loss_data.npy"), np.array(converted_val_losses))
-    if verbose:
-        print(
-            "Epoch loss data saved as [train_loss, val_loss] to path: ",
-            os.path.join(output_path, "results", "epoch_loss_data.npy"),
-        )
-        # print("Loss data saved as [train_losses, val_losses] to path: ", os.path.join(output_path, "results", "loss_data.npy"))
+    np.save(
+        os.path.join(output_path, "results", "mu_data.npy"),
+        np.array(mu_data),
+    )
+    np.save(
+        os.path.join(output_path, "results", "logvar_data.npy"),
+        np.array(logvar_data),
+    )
+    np.save(
+        os.path.join(output_path, "results", "z0_data.npy"),
+        np.array(z0_data),
+    )
+    np.save(
+        os.path.join(output_path, "results", "zk_data.npy"),
+        np.array(zk_data),
+    )
+    # np.save(
+    #     os.path.join(output_path, "results", "test_loss_data.npy"),
+    #     np.array(test_loss_data),
+    # )
+    
 
-    return model
+    return True

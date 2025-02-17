@@ -317,6 +317,7 @@ def preproc_inputs(paths, config, keyword, verbose: bool = False):
         jets_tensor, constituents_tensor = helper.select_features(
             jets_tensor, constituents_tensor, config.input_features
         )
+        data = (events_tensor, jets_tensor, constituents_tensor)
         if verbose:
             print("Data reshaped successfully")
             print("Events tensor shape:", events_tensor.shape)

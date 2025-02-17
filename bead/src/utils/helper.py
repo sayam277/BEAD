@@ -575,6 +575,44 @@ def train_val_split(tensor, train_ratio):
     return train_tensor, val_tensor
 
 
+def add_sig_bkg_label(tensors: tuple, label: str) -> tuple:
+    """
+    Adds a new feature to the last dimension of each tensor in the tuple.
+    The new feature is filled with 0 for "bkg" and 1 for "sig".
+
+    Args:
+        tensors: A tuple of three tensors (events, jets, constituents).
+        label: A string, either "bkg" or "sig", to determine the value of the new feature.
+
+    Returns:
+        A tuple of the three tensors with the new feature added to the last dimension.
+    """
+    if label not in ["bkg", "sig"]:
+        raise ValueError("label must be either 'bkg' or 'sig'")
+
+    # Determine the value for the new feature
+    feature_value = 0 if label == "bkg" else 1
+
+    def add_feature(tensor: torch.Tensor) -> torch.Tensor:
+        """Helper function to add the feature to a single tensor."""
+        # Get shape for the new feature tensor (same as input tensor but last dim=1)
+        feature_shape = tensor.shape[:-1] + (1,)
+        
+        # Create a tensor filled with the feature value, matching device and dtype
+        feature = torch.full(feature_shape, feature_value, dtype=tensor.dtype, device=tensor.device)
+        
+        # Concatenate along the last dimension
+        return torch.cat([tensor, feature], dim=-1)
+
+    # Apply the feature addition to each tensor in the tuple
+    events, jets, constituents = tensors
+    events = add_feature(events)
+    jets = add_feature(jets)
+    constituents = add_feature(constituents)
+
+    return events, jets, constituents
+
+
 def data_label_split(data):
     """Splits the data into features and labels.
 
@@ -920,7 +958,7 @@ class LRScheduler:
         self.lr_scheduler.step(loss)
 
 
-def load_model(model_object, model_path: str, n_features: int, z_dim: int):
+def load_model(model_path: str, in_shape, config):
     """Loads the state dictionary of the trained model into a model variable. This variable is then used for passing
     data through the encoding and decoding functions.
 
@@ -934,7 +972,15 @@ def load_model(model_object, model_path: str, n_features: int, z_dim: int):
     dictionary loaded into it.
     """
     device = get_device()
-    model = model_object(n_features, z_dim)
+
+    model_object = getattr(models, config.model_name)
+
+    if config.model_name == "pj_custom":
+        model = model_object(*in_shape, z_dim=config.latent_space_size)
+
+    else:
+        model = model_object(in_shape, z_dim=config.latent_space_size)
+    
     model.to(device)
 
     # Loading the state_dict into the model

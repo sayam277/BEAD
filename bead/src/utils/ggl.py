@@ -19,7 +19,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from src.utils import conversion, data_processing, helper, plotting, diagnostics
-from src.trainers import training
+from src.trainers import training, inference
 
 
 def get_arguments():
@@ -409,9 +409,9 @@ def prepare_inputs(paths, config, verbose: bool = False):
                 torch.save(jets_tensor, out_path + f"/bkg_train_jets.pt")
                 torch.save(constituents_tensor, out_path + f"/bkg_train_constituents.pt")
             elif keyword == "bkg_test":
-                torch.save(events_tensor, out_path + f"/bkg_test_events.pt")
-                torch.save(jets_tensor, out_path + f"/bkg_test_jets.pt")
-                torch.save(constituents_tensor, out_path + f"/bkg_test_constituents.pt")
+                torch.save(events_tensor, out_path + f"/bkg_test_genLabeled_events.pt")
+                torch.save(jets_tensor, out_path + f"/bkg_test_genLabeled_jets.pt")
+                torch.save(constituents_tensor, out_path + f"/bkg_test_genLabeled_constituents.pt")
 
         except ValueError as e:
             print(e)
@@ -509,35 +509,44 @@ def run_inference(paths, config, verbose: bool = False):
     
     start = time.time()
 
-    keyword = "sig_test"
-
     # Preprocess the data for training
-    data = data_processing.preproc_inputs(paths, config, keyword, verbose)
+    data_bkg = data_processing.preproc_inputs(paths, config, keyword="bkg_test", verbose=verbose)
+    data_sig = data_processing.preproc_inputs(paths, config, keyword="sig_test", verbose=verbose)
 
+    # Split Generator labels from bkg_test data
+    data_bkg, gen_labels = helper.data_label_split(data_bkg+data_bkg)
+    *data_bkg, _, _, _ = data_bkg
+    *gen_labels, _, _, _ = gen_labels
+
+    # Create bkg-sig labels
+    data_bkg = helper.add_sig_bkg_label(data_bkg, label="bkg")
+    data_sig = helper.add_sig_bkg_label(data_sig, label="sig")
+
+    data = data_bkg + data_sig
+    
     # Output path
     output_path = os.path.join(paths["project_path"], "output")
+    model_path = os.path.join(output_path, "models", "model.pt")
     if verbose:
         print(f"Output path: {output_path}")
+        print(f"Model path: {model_path}")
 
-    trained_model = inference.infer(*data, output_path, config, verbose)
-
-    if verbose:
-        print("Training complete")
-
+    done = False
+    done = inference.infer(*data, model_path, output_path, config, verbose)
+    
     end = time.time()
-    if verbose:
-        # Print model save path
-        print(f"Model saved to {os.path.join(output_path, 'models', 'model.pt')}")
-        print("\nThe model has the following structure:")
-        print(trained_model.type)
-        # print time taken in hours
-        print(f"The full training pipeline took: {(end - start) / 3600:.3} hours")
 
+    if done:
+        if verbose:
+            print("Inference complete")
 
+            # Print output save path
+            print(f"Outputs saved to {os.path.join(output_path, 'results')}")
 
-
-
-
+            # print time taken in hours
+            print(f"The full inference pipeline took: {(end - start) / 3600:.3} hours")
+    else:
+        print("Inference failed")
 
 
 def run_plots(output_path, config, verbose: bool):
