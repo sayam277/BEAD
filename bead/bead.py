@@ -86,10 +86,10 @@ def main():
         ggl.run_inference(paths, config, verbose)
     elif mode == "plot":
         ggl.run_plots(paths, config, verbose)
-    elif mode == "full_chain":
-        ggl.run_full_chain(paths, config, verbose)
     elif mode == "diagnostics":
         ggl.run_diagnostics(paths, config, verbose)
+    elif mode == "chain":
+        ggl.run_full_chain(workspace_name, project_name, paths, config, options, verbose)
     else:
         raise NameError(
             "BEAD mode "

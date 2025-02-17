@@ -611,3 +611,94 @@ def run_diagnostics(project_path, verbose: bool):
         os.makedirs(output_path)
     input_path = os.path.join(project_path, "training", "activations.npy")
     diagnostics.nap_diagnose(input_path, output_path)
+
+
+def run_full_chain(workspace_name: str, 
+                 project_name: str, 
+                 paths: dict, 
+                 config: dict, 
+                 options: str, 
+                 verbose: bool = False) -> None:
+    """
+    Execute a sequence of operations based on the provided options string.
+    
+    Args:
+        workspace_name: Name of the workspace for new projects
+        project_name: Name of the project for new projects
+        paths: Dictionary of file paths and directories
+        config: Configuration dictionary for operations
+        options: Underscore-separated string specifying the workflow sequence
+        verbose: Whether to show verbose output
+    
+    Example:
+        run_full_chain("my_workspace", "my_project", paths, config,
+                      "newproject_convertcsv_prepareinputs_train_detect", verbose=True)
+    """
+    # Map option components to mode names and execution order
+    OPTION_TO_MODE = {
+        "newproject": "new_project",
+        "convertcsv": "convert_csv",
+        "prepareinputs": "prepare_inputs",
+        "train": "train",
+        "detect": "detect",
+        "plot": "plot",
+        "diagnostics": "diagnostics"
+    }
+
+    # Map modes to their corresponding functions and arguments
+    MODE_OPERATIONS = {
+        "new_project": {
+            "func": create_new_project,
+            "args": (workspace_name, project_name, verbose)
+        },
+        "convert_csv": {
+            "func": convert_csv,
+            "args": (paths, config, verbose)
+        },
+        "prepare_inputs": {
+            "func": prepare_inputs,
+            "args": (paths, config, verbose)
+        },
+        "train": {
+            "func": run_training,
+            "args": (paths, config, verbose)
+        },
+        "detect": {
+            "func": run_inference,
+            "args": (paths, config, verbose)
+        },
+        "plot": {
+            "func": run_plots,
+            "args": (paths, config, verbose)
+        },
+        "diagnostics": {
+            "func": run_diagnostics,
+            "args": (paths, config, verbose)
+        }
+    }
+
+    # Split and validate options
+    workflow = options.split("_")
+    valid_options = set(OPTION_TO_MODE.keys())
+    
+    for step in workflow:
+        if step not in valid_options:
+            raise ValueError(f"Invalid option '{step}' in options string. "
+                             f"Valid options: {list(OPTION_TO_MODE.keys())}")
+
+    # Execute workflow steps in sequence
+    for step in workflow:
+        mode_name = OPTION_TO_MODE[step]
+        operation = MODE_OPERATIONS[mode_name]
+        
+        if verbose:
+            print(f"\n{'='*40}")
+            print(f"Executing step: {mode_name.replace('_', ' ').title()}")
+            print(f"{'='*40}")
+            
+        # Execute the operation with its arguments
+        operation["func"](*operation["args"])
+        
+        if verbose:
+            print(f"Completed step: {mode_name.replace('_', ' ').title()}\n")
+
