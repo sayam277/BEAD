@@ -1,4 +1,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14888114.svg)](https://doi.org/10.5281/zenodo.14888114)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![docs_build](https://github.com/PRAkTIKal24/BEAD/blob/main/.github/workflows/docs.yaml/badge.svg?event=push)](https://github.com/PRAkTIKal24/BEAD/actions)
+
 # BEAD
 **Background Enrichment for Anomaly Detection**
 || *{Background Enrichis pour (la Détection d'Anomalies) Anomalie Détection}*
