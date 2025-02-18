@@ -68,7 +68,9 @@ def get_arguments():
         "detect \t\t runs the inference mode using the trained model. Detects anomalies in the data and saves the results\n\n"
         "plot \t\t runs the plotting mode using the results from the detect or train mode.\n\t\t"
         " Generates plots as per the paper and saves them\n\n"
-        "full_chain \t runs all the modes in sequence. From processing the csv to generating the plots\n\n"
+        "chain \t\t runs all modes (except new_project) in the sequence prescribed by the <-o> or <--options> flag.\n\t\t"
+        " For example, when using <-m chain>, when you set <-o convertcsv_prepareinputs_train_detect>\n\t\t"
+        " it will run the convert_csv, prepare_inputs, train and detect modes in sequence.\n\n"
         "diagnostics \t runs the diagnostics mode. Generates runtime metrics using profilers\n\n",
     )
     parser.add_argument(
@@ -91,7 +93,7 @@ def get_arguments():
         "--options",
         type=str,
         required=False,
-        help="Additional options for convert_csv mode [h5 (default), npy]\n\n",
+        help="Additional options for convert_csv mode [h5 (default), npy] or for chain mode (see help for chain mode)\n\n",
     )
     parser.add_argument(
         "-v",
