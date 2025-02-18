@@ -367,12 +367,12 @@
             <span class="p">)</span>
 
             <span class="n">test_loss_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span>
-            <span class="n">reconstructed_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">recon</span><span class="p">)</span>
-            <span class="n">mu_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span>
-            <span class="n">logvar_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">logvar</span><span class="p">)</span>
-            <span class="n">log_det_jacobian_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ldj</span><span class="p">)</span>
-            <span class="n">z0_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">z0</span><span class="p">)</span>
-            <span class="n">zk_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">zk</span><span class="p">)</span>
+            <span class="n">reconstructed_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">recon</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+            <span class="n">mu_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mu</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+            <span class="n">logvar_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">logvar</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+            <span class="n">log_det_jacobian_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ldj</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+            <span class="n">z0_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">z0</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+            <span class="n">zk_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">zk</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
 
     <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
@@ -386,30 +386,33 @@
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training the model took </span><span class="si">{</span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">60</span><span class="si">:</span><span class="s2">.3</span><span class="si">}</span><span class="s2"> minutes&quot;</span><span class="p">)</span>
 
     <span class="c1"># Save all the data</span>
+    <span class="n">save_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">)</span>
     <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">,</span> <span class="s2">&quot;reconstructed_data.npy&quot;</span><span class="p">),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s2">&quot;reconstructed_data.npy&quot;</span><span class="p">),</span>
         <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">reconstructed_data</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">,</span> <span class="s2">&quot;mu_data.npy&quot;</span><span class="p">),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s2">&quot;mu_data.npy&quot;</span><span class="p">),</span>
         <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mu_data</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">,</span> <span class="s2">&quot;logvar_data.npy&quot;</span><span class="p">),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s2">&quot;logvar_data.npy&quot;</span><span class="p">),</span>
         <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">logvar_data</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">,</span> <span class="s2">&quot;z0_data.npy&quot;</span><span class="p">),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s2">&quot;z0_data.npy&quot;</span><span class="p">),</span>
         <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">z0_data</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">,</span> <span class="s2">&quot;zk_data.npy&quot;</span><span class="p">),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s2">&quot;zk_data.npy&quot;</span><span class="p">),</span>
         <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">zk_data</span><span class="p">),</span>
     <span class="p">)</span>
-    <span class="c1"># np.save(</span>
-    <span class="c1">#     os.path.join(output_path, &quot;results&quot;, &quot;test_loss_data.npy&quot;),</span>
-    <span class="c1">#     np.array(test_loss_data),</span>
-    <span class="c1"># )</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s2">&quot;log_det_jacobian_data.npy&quot;</span><span class="p">),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">log_det_jacobian_data</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">helper</span><span class="o">.</span><span class="n">save_loss_components</span><span class="p">(</span><span class="n">loss_data</span><span class="o">=</span><span class="n">test_loss_data</span><span class="p">,</span> <span class="n">component_names</span><span class="o">=</span><span class="n">loss_fn</span><span class="o">.</span><span class="n">component_names</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="n">save_dir</span><span class="p">)</span>
     
 
     <span class="k">return</span> <span class="kc">True</span></div>

@@ -515,7 +515,7 @@
             <span class="n">reg_param</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">reg_param</span><span class="p">,</span>
             <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">train_loss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">train_epoch_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="n">train_loss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">train_epoch_loss</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
         <span class="n">train_loss_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">train_losses</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">config</span><span class="o">.</span><span class="n">train_size</span><span class="p">:</span>
@@ -526,7 +526,7 @@
                 <span class="n">loss_fn</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">,</span>
                 <span class="n">reg_param</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">reg_param</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">val_loss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val_epoch_loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="n">val_loss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val_epoch_loss</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
             <span class="n">val_loss_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val_losses</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">val_epoch_loss</span> <span class="o">=</span> <span class="n">train_epoch_loss</span>
@@ -564,19 +564,21 @@
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training the model took </span><span class="si">{</span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">60</span><span class="si">:</span><span class="s2">.3</span><span class="si">}</span><span class="s2"> minutes&quot;</span><span class="p">)</span>
 
     <span class="c1"># Save loss data</span>
-
+    <span class="n">save_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">)</span>
     <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">,</span> <span class="s2">&quot;epoch_loss_data.npy&quot;</span><span class="p">),</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">train_loss</span><span class="p">,</span> <span class="n">val_loss</span><span class="p">]),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s2">&quot;train_epoch_loss_data.npy&quot;</span><span class="p">),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">train_loss</span><span class="p">),</span>
     <span class="p">)</span>
-    <span class="c1"># np.save(os.path.join(output_path, &quot;results&quot;, &quot;train_loss_data.npy&quot;), np.array(converted_train_losses))</span>
-    <span class="c1"># np.save(os.path.join(output_path, &quot;results&quot;, &quot;val_loss_data.npy&quot;), np.array(converted_val_losses))</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s2">&quot;val_epoch_loss_data.npy&quot;</span><span class="p">),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">val_loss</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">helper</span><span class="o">.</span><span class="n">save_loss_components</span><span class="p">(</span><span class="n">loss_data</span><span class="o">=</span><span class="n">train_loss_data</span><span class="p">,</span> <span class="n">component_names</span><span class="o">=</span><span class="n">loss_fn</span><span class="o">.</span><span class="n">component_names</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="n">save_dir</span><span class="p">)</span>
+    <span class="n">helper</span><span class="o">.</span><span class="n">save_loss_components</span><span class="p">(</span><span class="n">loss_data</span><span class="o">=</span><span class="n">val_loss_data</span><span class="p">,</span> <span class="n">component_names</span><span class="o">=</span><span class="n">loss_fn</span><span class="o">.</span><span class="n">component_names</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;val&quot;</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="n">save_dir</span><span class="p">)</span>
+    
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span>
-            <span class="s2">&quot;Epoch loss data saved as [train_loss, val_loss] to path: &quot;</span><span class="p">,</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;results&quot;</span><span class="p">,</span> <span class="s2">&quot;epoch_loss_data.npy&quot;</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="c1"># print(&quot;Loss data saved as [train_losses, val_losses] to path: &quot;, os.path.join(output_path, &quot;results&quot;, &quot;loss_data.npy&quot;))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loss data saved to path: &quot;</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">model</span></div>
 

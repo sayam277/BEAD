@@ -1185,6 +1185,53 @@
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">model</span></div>
 
+
+
+<div class="viewcode-block" id="save_loss_components">
+<a class="viewcode-back" href="../../../../bead.src.utils.html#bead.src.utils.helper.save_loss_components">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_loss_components</span><span class="p">(</span><span class="n">loss_data</span><span class="p">,</span> <span class="n">component_names</span><span class="p">,</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s2">&quot;loss_outputs&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function unpacks loss_data into separate components, converts each into a NumPy array,</span>
+<span class="sd">    and saves each array as a .npy file with a filename of the form:</span>
+<span class="sd">    &lt;component_name&gt;_&lt;suffix&gt;.npy</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      - loss_data: a list of tuples, where each tuple contains loss components</span>
+<span class="sd">      - component_names: a list of strings naming each component in the tuple</span>
+<span class="sd">      - suffix: a string keyword to be appended (separated by &#39;_&#39;) to each filename</span>
+<span class="sd">      - save_dir: directory to save .npy files (default &quot;loss_outputs&quot;)</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Ensure the save directory exists</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">loss_data</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;loss_data is empty.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check that the number of components in each tuple matches the number of names provided.</span>
+    <span class="n">n_components</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">loss_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">n_components</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">component_names</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The length of each loss tuple must match the number of component names provided.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Unpack the list of tuples into a list of components using zip.</span>
+    <span class="c1"># Each element in &#39;components&#39; is a tuple containing that component from every iteration.</span>
+    <span class="n">components</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">loss_data</span><span class="p">))</span>
+
+    <span class="c1"># Process and save each component.</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">comp</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">component_names</span><span class="p">,</span> <span class="n">components</span><span class="p">):</span>
+        <span class="c1"># Convert each element to a NumPy array if it&#39;s a PyTorch tensor.</span>
+        <span class="n">converted</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">comp</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="s2">&quot;detach&quot;</span><span class="p">):</span>  <span class="c1"># likely a PyTorch tensor</span>
+                <span class="n">converted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">converted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">converted</span><span class="p">)</span>
+        
+        <span class="c1"># Create filename with component name and appended suffix</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.npy&quot;</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">arr</span><span class="p">)</span></div>
+
 </pre></div>
 
            </div>

@@ -141,7 +141,9 @@
         <span class="s2">&quot;detect </span><span class="se">\t\t</span><span class="s2"> runs the inference mode using the trained model. Detects anomalies in the data and saves the results</span><span class="se">\n\n</span><span class="s2">&quot;</span>
         <span class="s2">&quot;plot </span><span class="se">\t\t</span><span class="s2"> runs the plotting mode using the results from the detect or train mode.</span><span class="se">\n\t\t</span><span class="s2">&quot;</span>
         <span class="s2">&quot; Generates plots as per the paper and saves them</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;full_chain </span><span class="se">\t</span><span class="s2"> runs all the modes in sequence. From processing the csv to generating the plots</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;chain </span><span class="se">\t\t</span><span class="s2"> runs all modes (except new_project) in the sequence prescribed by the &lt;-o&gt; or &lt;--options&gt; flag.</span><span class="se">\n\t\t</span><span class="s2">&quot;</span>
+        <span class="s2">&quot; For example, when using &lt;-m chain&gt;, when you set &lt;-o convertcsv_prepareinputs_train_detect&gt;</span><span class="se">\n\t\t</span><span class="s2">&quot;</span>
+        <span class="s2">&quot; it will run the convert_csv, prepare_inputs, train and detect modes in sequence.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
         <span class="s2">&quot;diagnostics </span><span class="se">\t</span><span class="s2"> runs the diagnostics mode. Generates runtime metrics using profilers</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
@@ -164,7 +166,7 @@
         <span class="s2">&quot;--options&quot;</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
         <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Additional options for convert_csv mode [h5 (default), npy]</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Additional options for convert_csv mode [h5 (default), npy] or for chain mode (see help for chain mode)</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">&quot;-v&quot;</span><span class="p">,</span>

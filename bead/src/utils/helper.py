@@ -997,7 +997,7 @@ def save_loss_components(loss_data, component_names, suffix, save_dir="loss_outp
     """
     This function unpacks loss_data into separate components, converts each into a NumPy array,
     and saves each array as a .npy file with a filename of the form:
-        <component_name>_<suffix>.npy
+    <component_name>_<suffix>.npy
 
     Args:
       - loss_data: a list of tuples, where each tuple contains loss components
