@@ -6,6 +6,8 @@
 BEAD documentation
 ==================
 
+**Background Enrichment for Anomaly Detection** || *{Background Enrichis pour (la Détection d'Anomalies) Anomalie Détection}*
+
 BEAD is a Python package that uses deep learning based methods for anomaly detection in HEP data for new physics searches.
 BEAD has been designed with modularity in mind, to enable usage of various unsupervised latent variable models for any task.
 
