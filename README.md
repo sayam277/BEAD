@@ -6,12 +6,12 @@ BEAD is a Python package that uses deep learning based methods for anomaly detec
 
 BEAD has five main running modes:
 
-Data handling: Deals with handling file types, conversions between them and pre-processing the data to feed as inputs to the DL models.
+- Data handling: Deals with handling file types, conversions between them and pre-processing the data to feed as inputs to the DL models.
 
-Training: Train your model to learn implicit representations of your background data that may come from multiple sources/generators to get a single, encriched latent representation of it.
+- Training: Train your model to learn implicit representations of your background data that may come from multiple sources/generators to get a single, encriched latent representation of it.
 
-Inference: Using a model trained on an enriched background, feed in samples you want to detect anomalies in using the ‘–detect or -d’ mode.
+- Inference: Using a model trained on an enriched background, feed in samples you want to detect anomalies in using the ‘–detect or -d’ mode.
 
-Plotting: After running Inference, or Training you can generate plots similar towhat is shown in the paper. These include performance plots as well as different visualizations of the learned data.
+- Plotting: After running Inference, or Training you can generate plots similar towhat is shown in the paper. These include performance plots as well as different visualizations of the learned data.
 
-Diagnostics: Enabling this mode allows running profilers that measure a host of metrics connected to the usage of the compute node you run on to help you optimize the code if needed(using CPU-GPU metrics).
+- Diagnostics: Enabling this mode allows running profilers that measure a host of metrics connected to the usage of the compute node you run on to help you optimize the code if needed(using CPU-GPU metrics).
