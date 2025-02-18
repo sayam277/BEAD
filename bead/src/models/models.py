@@ -269,7 +269,7 @@ class ConvAE(nn.Module):
     def forward(self, x):
         z = self.encode(x)
         out = self.decode(z)
-        return out, z
+        return out, z, z, z, z, z
 
 
 class ConvVAE(ConvAE):
@@ -1059,4 +1059,4 @@ class TransformerAE(nn.Module):
         """
         z = self.encoder(x)
         x = self.decoder(z)
-        return x
+        return x, z, z, z, z, z
