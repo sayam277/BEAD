@@ -4,6 +4,8 @@
 
 [![GitHub version](https://badge.fury.io/gh/PRAkTIKal24%2FBEAD.svg)](https://badge.fury.io/gh/PRAkTIKal24%2FBEAD)
 
+![example event workflow](https://github.com/PRAkTIKal24/BEAD/actions/workflows/docs.yaml/badge.svg?event=push)
+
 # BEAD
 **Background Enrichment for Anomaly Detection**
 || *{Background Enrichis pour (la Détection d'Anomalies) Anomalie Détection}*
