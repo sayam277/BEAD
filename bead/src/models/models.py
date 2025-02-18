@@ -20,8 +20,8 @@ import torch.utils.data
 from torch.nn import functional as F
 from torch.autograd import Function, Variable
 
-from src.utils import helper
-from src.models import flows
+from ..utils import helper
+from . import flows
 
 
 class AE(nn.Module):

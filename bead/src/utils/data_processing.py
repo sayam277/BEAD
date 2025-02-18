@@ -8,7 +8,7 @@ from sklearn.preprocessing import LabelEncoder
 from loky import get_reusable_executor
 import pickle
 
-from src.utils import helper, normalization
+from . import helper, normalization
 
 
 def load_data(file_path, file_type="h5", verbose: bool = False):

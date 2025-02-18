@@ -4,6 +4,14 @@ bead.src.trainers package
 Submodules
 ----------
 
+bead.src.trainers.inference module
+----------------------------------
+
+.. automodule:: bead.src.trainers.inference
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 bead.src.trainers.training module
 ---------------------------------
 

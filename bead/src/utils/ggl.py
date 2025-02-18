@@ -13,13 +13,12 @@ import time
 from tqdm.rich import tqdm
 from art import *
 
-sys.path.append(os.getcwd())
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from src.utils import conversion, data_processing, helper, plotting, diagnostics
-from src.trainers import training, inference
+from . import conversion, data_processing, helper, plotting, diagnostics
+from ..trainers import training, inference
 
 
 def get_arguments():
@@ -191,15 +190,15 @@ def set_config(c):
     c.normalizations               = "pj_custom"
     c.invert_normalizations        = False
     c.train_size                   = 0.95
-    c.model_name                   = "Conv_VAE"
+    c.model_name                   = "Planar_ConvVAE"
     c.input_level                  = "constituent"
-    c.input_features               = "4momentum"
+    c.input_features               = "4momentum_btag"
     c.model_init                   = "xavier"
-    c.loss_function                = "MSE"
+    c.loss_function                = "VAEFlowLoss"
     c.optimizer                    = "adamw"
     c.epochs                       = 2
     c.lr                           = 0.001
-    c.batch_size                   = 512
+    c.batch_size                   = 2
     c.early_stopping               = True
     c.lr_scheduler                 = True
 
@@ -452,6 +451,8 @@ def run_training(paths, config, verbose: bool = False):
     """
     start = time.time()
 
+    print("Training...")
+
     keyword = "bkg_train"
 
     # Preprocess the data for training
@@ -464,8 +465,7 @@ def run_training(paths, config, verbose: bool = False):
 
     trained_model = training.train(*data, output_path, config, verbose)
 
-    if verbose:
-        print("Training complete")
+    print("Training complete")
 
     if config.separate_model_saving:
         helper.encoder_saver(
@@ -509,6 +509,8 @@ def run_inference(paths, config, verbose: bool = False):
     
     start = time.time()
 
+    print("Inference...")
+
     # Preprocess the data for training
     data_bkg = data_processing.preproc_inputs(paths, config, keyword="bkg_test", verbose=verbose)
     data_sig = data_processing.preproc_inputs(paths, config, keyword="sig_test", verbose=verbose)
@@ -537,9 +539,8 @@ def run_inference(paths, config, verbose: bool = False):
     end = time.time()
 
     if done:
+        print("Inference complete")
         if verbose:
-            print("Inference complete")
-
             # Print output save path
             print(f"Outputs saved to {os.path.join(output_path, 'results')}")
 

@@ -18,15 +18,15 @@ import time
 import sys
 import numpy as np
 from tqdm.rich import tqdm
+import warnings
+from tqdm import TqdmExperimentalWarning
 
 from torch.nn import functional as F
 import torch
 from torch.utils.data import DataLoader
 
-from src.utils import helper, loss, diagnostics
+from ..utils import helper, loss, diagnostics
 
-import warnings
-from tqdm import TqdmExperimentalWarning
 
 warnings.filterwarnings("ignore", category=TqdmExperimentalWarning)
 
@@ -40,6 +40,7 @@ def fit(
     optimizer,
 ):
     """This function trains the model on the train set. It computes the losses and does the backwards propagation, and updates the optimizer as well.
+    
     Args:
         config (dataClass): Base class selecting user inputs
         model (modelObject): The model you wish to train
@@ -47,6 +48,7 @@ def fit(
         loss (lossObject): Defines the loss function used to train the model
         reg_param (float): Determines proportionality constant to balance different components of the loss.
         optimizer (torch.optim): Chooses optimizer for gradient descent.
+    
     Returns:
         list, model object: Training losses, Epoch_loss and trained model
     """
@@ -94,11 +96,13 @@ def fit(
 
 def validate(config, model, dataloader, loss_fn, reg_param):
     """Function used to validate the training. Not necessary for doing compression, but gives a good indication of wether the model selected is a good fit or not.
+    
     Args:
         model (modelObject): Defines the model one wants to validate. The model used here is passed directly from `fit()`.
         test_dl (torch.DataLoader): Defines the batched data which the model is validated on
         model_children (list): List of model parameters
         reg_param (float): Determines proportionality constant to balance different components of the loss.
+    
     Returns:
         float: Validation loss
     """
@@ -138,6 +142,7 @@ def validate(config, model, dataloader, loss_fn, reg_param):
 
 def seed_worker(worker_id):
     """PyTorch implementation to fix the seeds
+    
     Args:
         worker_id ():
     """
@@ -162,11 +167,13 @@ def train(
         and it is the `torch.utils.data.DataLoader` doing the splitting.
         Applying either `EarlyStopping` or `LR Scheduler` is also done here, all based on their respective `config` arguments.
         For reproducibility, the seeds can also be fixed in this function.
+    
     Args:
         model (modelObject): The model you wish to train
         data (Tuple): Tuple containing the training and validation data
         project_path (string): Path to the project directory
         config (dataClass): Base class selecting user inputs
+    
     Returns:
         modelObject: fully trained model ready to perform compression and decompression
     """

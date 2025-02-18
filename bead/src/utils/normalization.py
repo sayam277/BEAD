@@ -1,7 +1,7 @@
 # Custom normalization functions for analysis.
 
 import numpy as np
-from src.utils import helper
+from . import helper
 
 
 def normalize_jet_pj_custom(data):
@@ -9,16 +9,16 @@ def normalize_jet_pj_custom(data):
     Normalizes jet data for HEP analysis using a chained normalization approach.
 
     Input data is expected as a NumPy array of shape (N, 7) with columns in the order:
-        0: event_id         (unchanged)
-        1: jet_id           (unchanged)
-        2: num_constituents (to be normalized via "robust")
-        3: b_tagged         (already integer; left unchanged)
-        4: jet_pt           (to be normalized via "log+standard")
-        5: jet_eta          (to be normalized via "standard")
-        6: jet_phi          (to be normalized via "sin_cos" transformation)
+    0: event_id         (unchanged)
+    1: jet_id           (unchanged)
+    2: num_constituents (to be normalized via "robust")
+    3: b_tagged         (already integer; left unchanged)
+    4: jet_pt           (to be normalized via "log+standard")
+    5: jet_eta          (to be normalized via "standard")
+    6: jet_phi          (to be normalized via "sin_cos" transformation)
 
     The output array will have 8 columns:
-        [event_id, jet_id, num_constituents_norm, b_tagged, jet_pt_norm, jet_eta_norm, jet_phi_sin, jet_phi_cos]
+    [event_id, jet_id, num_constituents_norm, b_tagged, jet_pt_norm, jet_eta_norm, jet_phi_sin, jet_phi_cos]    
 
     Args:
         data (np.ndarray): Input array of shape (N, 7).

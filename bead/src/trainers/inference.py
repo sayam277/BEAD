@@ -18,15 +18,15 @@ import time
 import sys
 import numpy as np
 from tqdm.rich import tqdm
+import warnings
+from tqdm import TqdmExperimentalWarning
 
 from torch.nn import functional as F
 import torch
 from torch.utils.data import DataLoader, ConcatDataset
 
-from src.utils import helper, loss, diagnostics
+from ..utils import helper, loss, diagnostics
 
-import warnings
-from tqdm import TqdmExperimentalWarning
 
 warnings.filterwarnings("ignore", category=TqdmExperimentalWarning)
 
@@ -54,15 +54,17 @@ def infer(
     verbose: bool = False,
 ):
     """Does the entire training loop by calling the `fit()` and `validate()`. Appart from this, this is the main function where the data is converted
-        to the correct type for it to be trained, via `torch.Tensor()`. Furthermore, the batching is also done here, based on `config.batch_size`,
-        and it is the `torch.utils.data.DataLoader` doing the splitting.
-        Applying either `EarlyStopping` or `LR Scheduler` is also done here, all based on their respective `config` arguments.
-        For reproducibility, the seeds can also be fixed in this function.
+       to the correct type for it to be trained, via `torch.Tensor()`. Furthermore, the batching is also done here, based on `config.batch_size`,
+       and it is the `torch.utils.data.DataLoader` doing the splitting.
+       Applying either `EarlyStopping` or `LR Scheduler` is also done here, all based on their respective `config` arguments.
+       For reproducibility, the seeds can also be fixed in this function.
+    
     Args:
         model (modelObject): The model you wish to train
         data (Tuple): Tuple containing the training and validation data
         project_path (string): Path to the project directory
         config (dataClass): Base class selecting user inputs
+    
     Returns:
         modelObject: fully trained model ready to perform compression and decompression
     """

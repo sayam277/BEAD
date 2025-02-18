@@ -18,8 +18,8 @@ from sklearn.preprocessing import (
 )
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from src.models import models
-from src.utils import loss
+from ..models import models
+from . import loss
 
 
 def get_device():
@@ -217,15 +217,15 @@ def normalize_data(data, normalization_type):
         normalization_type: A string indicating the normalization method(s).
             It can be a single method or a chain of methods separated by '+'.
             Valid options include:
-                'minmax'  - MinMaxScaler (scales features to [0,1])
-                'standard'- StandardScaler (zero mean, unit variance)
-                'robust'  - RobustScaler (less sensitive to outliers)
-                'log'     - Log1pScaler (applies log1p transformation)
-                'l2'      - L2Normalizer (scales each feature by its L2 norm)
-                'power'   - PowerTransformer (using Yeo-Johnson)
-                'quantile'- QuantileTransformer (transforms features to follow a normal or uniform distribution)
-                'maxabs'  - MaxAbsScaler (scales each feature by its maximum absolute value)
-                'sincos'  - SinCosTransformer (converts angles to sin/cos features)
+            'minmax'  - MinMaxScaler (scales features to [0,1])
+            'standard'- StandardScaler (zero mean, unit variance)
+            'robust'  - RobustScaler (less sensitive to outliers)
+            'log'     - Log1pScaler (applies log1p transformation)
+            'l2'      - L2Normalizer (scales each feature by its L2 norm)
+            'power'   - PowerTransformer (using Yeo-Johnson)
+            'quantile'- QuantileTransformer (transforms features to follow a normal or uniform distribution)
+            'maxabs'  - MaxAbsScaler (scales each feature by its maximum absolute value)
+            'sincos'  - SinCosTransformer (converts angles to sin/cos features)
             Example: 'log+standard' applies a log transformation followed by standard scaling.
 
     Returns:
@@ -293,7 +293,7 @@ def invert_normalize_data(normalized_data, scaler):
     Args:
         normalized_data (np.ndarray): The transformed data array.
         scaler: The scaler object (or a ChainedScaler instance) used for the forward transformation,
-                which must implement an `inverse_transform` method.
+            which must implement an `inverse_transform` method.
 
     Returns:
         np.ndarray: The data mapped back to its original scale.
@@ -320,8 +320,8 @@ def load_tensors(folder_path, keyword="sig_test"):
 
     Raises:
         ValueError: If any specific category ('jets', 'events', 'constituents') has no matching files.
-                    The error message is:
-                    "Required files not found. Please run the --mode convert_csv and prepare inputs before retrying."
+            The error message is:
+            "Required files not found. Please run the --mode convert_csv and prepare inputs before retrying."
     """
     if keyword not in ["bkg_train", "bkg_test", "sig_test"]:
         raise ValueError(
@@ -385,12 +385,12 @@ def load_augment_tensors(folder_path, keyword):
 
     Returns:
         tuple: A tuple of three PyTorch tensors: (jets_tensor, events_tensor, constituents_tensor)
-               corresponding to the concatenated tensors for each category.
+            corresponding to the concatenated tensors for each category.
 
     Raises:
         ValueError: If any category does not have at least one file for each generator type.
-                  The error message is:
-                  "required files not found. please run the --mode convert_csv and prepare inputs before retrying"
+            The error message is:
+            "required files not found. please run the --mode convert_csv and prepare inputs before retrying"
     """
     # Check if the keyword is valid
     if keyword not in ["bkg_train", "bkg_test"]:
@@ -921,22 +921,25 @@ class EarlyStopping:
 class LRScheduler:
     """
     A learning rate scheduler that adjusts the learning rate of an optimizer based on the training loss.
+    
     Args:
         optimizer (torch.optim.Optimizer): The optimizer whose learning rate will be adjusted.
         patience (int): The number of epochs with no improvement in training loss after which the learning rate
             will be reduced.
         min_lr (float, optional): The minimum learning rate that can be reached (default: 1e-6).
         factor (float, optional): The factor by which the learning rate will be reduced (default: 0.1).
+    
     Attributes:
         lr_scheduler (torch.optim.lr_scheduler.ReduceLROnPlateau): The PyTorch learning rate scheduler that
             actually performs the adjustments.
+    
     Example usage:
         optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
         lr_scheduler = LRScheduler(optimizer, patience=3, min_lr=1e-6, factor=0.5)
         for epoch in range(num_epochs):
-            train_loss = train(model, train_data_loader)
-            lr_scheduler(train_loss)
-            # ...
+        train_loss = train(model, train_data_loader)
+        lr_scheduler(train_loss)
+        # ...
     """
 
     def __init__(self, optimizer, patience, min_lr=1e-6, factor=0.5):

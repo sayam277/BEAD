@@ -13,7 +13,7 @@ import numpy as np
 import math
 import sys
 
-from src.models.layers import (
+from .layers import (
     FCNN,
     MaskedConv2d,
     MaskedLinear,

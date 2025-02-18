@@ -12,10 +12,22 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('..'))
-# sys.path.append(os.path.abspath('../bead/src'))
-print(os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath(os.path.join('..')))
 
+# project_root = os.path.abspath('..')  # Adjust based on your actual structure
+# package_dir = os.path.join(project_root, 'bead')
+
+# sys.path.insert(0, project_root)
+# sys.path.insert(0, package_dir)
+# sys.path.insert(0, os.path.join(package_dir, 'src'))
+
+# conf.py
+autodoc_mock_imports = []  # Remove any mocked dependencies if not needed
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'show-inheritance': True
+}
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 

@@ -1,4 +1,4 @@
-BEAD
+bead
 ====
 
 .. toctree::
