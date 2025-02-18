@@ -13,8 +13,10 @@ BEAD has five main running modes:
 
 - Training: Train your model to learn implicit representations of your background data that may come from multiple sources/generators to get a single, encriched latent representation of it.
 
-- Inference: Using a model trained on an enriched background, feed in samples you want to detect anomalies in using the ‘–detect or -d’ mode.
+- Inference: Using a model trained on an enriched background, feed in samples you want to detect anomalies in and watch the magic happen.
 
 - Plotting: After running Inference, or Training you can generate plots similar towhat is shown in the paper. These include performance plots as well as different visualizations of the learned data.
 
 - Diagnostics: Enabling this mode allows running profilers that measure a host of metrics connected to the usage of the compute node you run on to help you optimize the code if needed(using CPU-GPU metrics).
+
+For more information, follow the install instructions below go to the directory `./BEAD/bead/` and then run the command ```poetry run bead -h``` to get detailed instructions on running the package and the available customizations
