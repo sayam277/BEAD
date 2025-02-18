@@ -433,7 +433,7 @@ def train(
             reg_param=config.reg_param,
             optimizer=optimizer,
         )
-        train_loss.append(train_epoch_loss.item())
+        train_loss.append(train_epoch_loss.detach().cpu().numpy())
         train_loss_data.append(train_losses)
 
         if 1 - config.train_size:
@@ -444,7 +444,7 @@ def train(
                 loss_fn=loss_fn,
                 reg_param=config.reg_param,
             )
-            val_loss.append(val_epoch_loss.item())
+            val_loss.append(val_epoch_loss.detach().cpu().numpy())
             val_loss_data.append(val_losses)
         else:
             val_epoch_loss = train_epoch_loss
@@ -482,18 +482,20 @@ def train(
         print(f"Training the model took {(end - start) / 60:.3} minutes")
 
     # Save loss data
-
+    save_dir = os.path.join(output_path, "results")
     np.save(
-        os.path.join(output_path, "results", "epoch_loss_data.npy"),
-        np.array([train_loss, val_loss]),
+        os.path.join(save_dir, "train_epoch_loss_data.npy"),
+        np.array(train_loss),
     )
-    # np.save(os.path.join(output_path, "results", "train_loss_data.npy"), np.array(converted_train_losses))
-    # np.save(os.path.join(output_path, "results", "val_loss_data.npy"), np.array(converted_val_losses))
+    np.save(
+        os.path.join(save_dir, "val_epoch_loss_data.npy"),
+        np.array(val_loss),
+    )
+
+    helper.save_loss_components(loss_data=train_loss_data, component_names=loss_fn.component_names, suffix="train", save_dir=save_dir)
+    helper.save_loss_components(loss_data=val_loss_data, component_names=loss_fn.component_names, suffix="val", save_dir=save_dir)
+    
     if verbose:
-        print(
-            "Epoch loss data saved as [train_loss, val_loss] to path: ",
-            os.path.join(output_path, "results", "epoch_loss_data.npy"),
-        )
-        # print("Loss data saved as [train_losses, val_losses] to path: ", os.path.join(output_path, "results", "loss_data.npy"))
+        print("Loss data saved to path: ", save_dir)
 
     return model

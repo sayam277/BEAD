@@ -291,12 +291,12 @@ def infer(
             )
 
             test_loss_data.append(losses)
-            reconstructed_data.append(recon)
-            mu_data.append(mu)
-            logvar_data.append(logvar)
-            log_det_jacobian_data.append(ldj)
-            z0_data.append(z0)
-            zk_data.append(zk)
+            reconstructed_data.append(recon.detach().cpu().numpy())
+            mu_data.append(mu.detach().cpu().numpy())
+            logvar_data.append(logvar.detach().cpu().numpy())
+            log_det_jacobian_data.append(ldj.detach().cpu().numpy())
+            z0_data.append(z0.detach().cpu().numpy())
+            zk_data.append(zk.detach().cpu().numpy())
 
     end = time.time()
 
@@ -310,30 +310,33 @@ def infer(
         print(f"Training the model took {(end - start) / 60:.3} minutes")
 
     # Save all the data
+    save_dir = os.path.join(output_path, "results")
     np.save(
-        os.path.join(output_path, "results", "reconstructed_data.npy"),
+        os.path.join(save_dir, "reconstructed_data.npy"),
         np.array(reconstructed_data),
     )
     np.save(
-        os.path.join(output_path, "results", "mu_data.npy"),
+        os.path.join(save_dir, "mu_data.npy"),
         np.array(mu_data),
     )
     np.save(
-        os.path.join(output_path, "results", "logvar_data.npy"),
+        os.path.join(save_dir, "logvar_data.npy"),
         np.array(logvar_data),
     )
     np.save(
-        os.path.join(output_path, "results", "z0_data.npy"),
+        os.path.join(save_dir, "z0_data.npy"),
         np.array(z0_data),
     )
     np.save(
-        os.path.join(output_path, "results", "zk_data.npy"),
+        os.path.join(save_dir, "zk_data.npy"),
         np.array(zk_data),
     )
-    # np.save(
-    #     os.path.join(output_path, "results", "test_loss_data.npy"),
-    #     np.array(test_loss_data),
-    # )
+    np.save(
+        os.path.join(save_dir, "log_det_jacobian_data.npy"),
+        np.array(log_det_jacobian_data),
+    )
+
+    helper.save_loss_components(loss_data=test_loss_data, component_names=loss_fn.component_names, suffix="test", save_dir=save_dir)
     
 
     return True

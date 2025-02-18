@@ -991,3 +991,47 @@ def load_model(model_path: str, in_shape, config):
         torch.load(str(model_path), map_location=device), strict=False
     )
     return model
+
+
+def save_loss_components(loss_data, component_names, suffix, save_dir="loss_outputs"):
+    """
+    This function unpacks loss_data into separate components, converts each into a NumPy array,
+    and saves each array as a .npy file with a filename of the form:
+        <component_name>_<suffix>.npy
+
+    Args:
+      - loss_data: a list of tuples, where each tuple contains loss components
+      - component_names: a list of strings naming each component in the tuple
+      - suffix: a string keyword to be appended (separated by '_') to each filename
+      - save_dir: directory to save .npy files (default "loss_outputs")
+    
+    """
+    # Ensure the save directory exists
+    os.makedirs(save_dir, exist_ok=True)
+
+    if not loss_data:
+        raise ValueError("loss_data is empty.")
+
+    # Check that the number of components in each tuple matches the number of names provided.
+    n_components = len(loss_data[0])
+    if n_components != len(component_names):
+        raise ValueError("The length of each loss tuple must match the number of component names provided.")
+
+    # Unpack the list of tuples into a list of components using zip.
+    # Each element in 'components' is a tuple containing that component from every iteration.
+    components = list(zip(*loss_data))
+
+    # Process and save each component.
+    for name, comp in zip(component_names, components):
+        # Convert each element to a NumPy array if it's a PyTorch tensor.
+        converted = []
+        for val in comp:
+            if hasattr(val, "detach"):  # likely a PyTorch tensor
+                converted.append(val.detach().cpu().numpy())
+            else:
+                converted.append(val)
+        arr = np.array(converted)
+        
+        # Create filename with component name and appended suffix
+        filename = os.path.join(save_dir, f"{name}_{suffix}.npy")
+        np.save(filename, arr)
