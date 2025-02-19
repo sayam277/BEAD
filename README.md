@@ -25,3 +25,18 @@ BEAD has five main running modes:
 - Diagnostics: Enabling this mode allows running profilers that measure a host of metrics connected to the usage of the compute node you run on to help you optimize the code if needed(using CPU-GPU metrics).
 
 For more information, follow the install instructions below go to the directory `./BEAD/bead/` and then run the command ```poetry run bead -h``` to get detailed instructions on running the package and the available customizations
+
+
+
+# Installation
+1. Poetry: BEAD is managed by the poetry package manager - this simplifies the task of creating an environment, installing the right dependencies, version incompatibilities etc. So first start with installing poetry according to the instructions given [here](https://python-poetry.org/docs/#installation)
+2. After installing poetry, clone this repository to your working directory.
+3. Enter the `BEAD/bead/` directory using `cd bead`
+4. You are now ready to start running the package! As a first step try the following command:
+```poetry run bead -h```  
+This should bring up the help window that explains all the various running modes of bead.
+5. Start with creating a new workspace and project like so:
+```poetry run bead -m new_project -p <WORKSPACE_NAME> <PROJECT_NAME>```
+This will setup all the required directories inside `BEAD/bead/workspaces/`. Remember to use a different workspace everytime you want to modify your input data, since all the projects inside a given workspace share and overwrite the input data. If you want to use the same input data but change something else in the pipeline (for eg. different config options such as `model_name`, `loss_function` etc.), use the same `workspace_name`, but create a new project with a different `'project_name'`. On doing this, your data will already be ready from the previous project in that workspace so you can skip directly to the subsequent steps.
+6. After creating a new workspace, it is essential to move the `*_input_data.csv` files to the `BEAD/bead/workspaces/WORKSPACE_NAME/data/` directory
+7. After making sure the input files are in the right location, you can run the subsequent operation modes of BEAD.
