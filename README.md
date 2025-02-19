@@ -1,8 +1,13 @@
+![GitHub Release Date](https://img.shields.io/github/release-date-pre/PRAkTIKal24/BEAD?style=plastic&color=blue)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14888114.svg)](https://doi.org/10.5281/zenodo.14888114)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-
 [![GitHub version](https://badge.fury.io/gh/PRAkTIKal24%2FBEAD.svg)](https://badge.fury.io/gh/PRAkTIKal24%2FBEAD)
 [![example event workflow](https://github.com/PRAkTIKal24/BEAD/actions/workflows/docs.yaml/badge.svg?event=push)](https://github.com/PRAkTIKal24/BEAD/actions)
+![GitHub repo size](https://img.shields.io/github/repo-size/PRAkTIKal24/BEAD)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/PRAkTIKal24/BEAD/total)
+![GitHub forks](https://img.shields.io/github/forks/PRAkTIKal24/BEAD?style=plastic&color=orange)
+
+
 
 # BEAD
 **Background Enrichment for Anomaly Detection**
@@ -95,11 +100,11 @@ For a full chain example, look at the [full chain example](#example) below!
 
     If you would like to only produce plots for training losses, use the `-o` flag like so:
 
-              poetry run bead -m plot -p WORKSPACE_NAME PROJECT_NAME -o train_metrics
+        poetry run bead -m plot -p WORKSPACE_NAME PROJECT_NAME -o train_metrics
 
     If you only want plots from the inference, use:
 
-              poetry run bead -m plot -p WORKSPACE_NAME PROJECT_NAME -o test_metrics
+        poetry run bead -m plot -p WORKSPACE_NAME PROJECT_NAME -o test_metrics
 
 12. Chaining modes to avoid repetitive running of commands is facilitated by the `-m chain` mode, which **requires** the `-o` flag to determine which modes need to be chained and in what order. Look at the example below.
 
@@ -107,11 +112,11 @@ For a full chain example, look at the [full chain example](#example) below!
 
 Say I created a new workspace that tests `SVJ` samples with `rinv=0.3` and a new project that runs the `ConvVAE` model for `500 epochs` with a learning rate of `1e-4` like so:
 
-     poetry run bead -m new_project -p svj_rinv3 convVae_ep500_lr4
+        poetry run bead -m new_project -p svj_rinv3 convVae_ep500_lr4
 
 Then I moved the input `CSVs` to the `BEAD/bead/workspaces/svj_rinv3/data/csv/` directory. Then I want to run all the modes until the inference step, I just need to run the command:
 
-      poetry run bead -m chain -p svj_rinv3 convVae_ep500_lr4 -o convertcsv_prepareinputs_train_detect
+        poetry run bead -m chain -p svj_rinv3 convVae_ep500_lr4 -o convertcsv_prepareinputs_train_detect
 
 and I'm good to log off for a snooze!
 
