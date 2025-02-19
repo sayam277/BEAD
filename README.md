@@ -37,7 +37,7 @@ For a full chain example, look at the [full chain example](#example) below!
 
 3. Enter the `BEAD/bead/` directory using `cd bead`
 
-4. Install the package using:
+4. Install the BEAD package using:
 
         poetry install
 
