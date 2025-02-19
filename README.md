@@ -37,23 +37,27 @@ For a full chain example, look at the [full chain example](#example) below!
 
 3. Enter the `BEAD/bead/` directory using `cd bead`
 
-4. You are now ready to start running the package! As a first step try the following command:
+4. Install the package using:
 
-        ```poetry run bead -h```
+        poetry install
+
+5. You are now ready to start running the package! As a first step try the following command:
+
+        poetry run bead -h
 
     This should bring up the help window that explains all the various running modes of bead.
 
 6. Start with creating a new workspace and project like so:
 
-        ```poetry run bead -m new_project -p <WORKSPACE_NAME> <PROJECT_NAME>```
+        poetry run bead -m new_project -p <WORKSPACE_NAME> <PROJECT_NAME>
 
     This will setup all the required directories inside `BEAD/bead/workspaces/`. 
 
     For any of the operation modes below, if you would like to see verbose outputs to know exactly what is going on, use the `-v` flag at the end of     the command like so:
 
-        ```poetry run bead -m new_project -p <WORKSPACE_NAME> <PROJECT_NAME> -v```
+        poetry run bead -m new_project -p <WORKSPACE_NAME> <PROJECT_NAME> -v
 
-    Remember to use a different workspace everytime you want to modify your input data, since all the projects inside a given workspace share and overwrite the input data. 
+    **Remember** to use a different workspace everytime you want to modify your input data, since all the projects inside a given workspace share and overwrite the input data. 
 
     If you want to use the same input data but change something else in the pipeline (for eg. different config options such as `model_name`, `loss_function` etc.), use the same `workspace_name`, but create a new project with a different `'project_name'`. On doing this, your data will already be ready from the previous project in that workspace so you can skip directly to the subsequent steps.
 
@@ -61,41 +65,41 @@ For a full chain example, look at the [full chain example](#example) below!
 
 7. After making sure the input files are in the right location, you can start converting the `csv` files to the file type specified in the `BEAD/bead/workspaces/<WORKSPACE_NAME>/<PROJECT_NAME>/config/<PROJECT_NAME>_config.py` file. `h5` is the default and preferred method. To run the conversion mode, use:
 
-        ```poetry run bead -m convert_csv -p WORKSPACE_NAME PROJECT_NAME```
+        poetry run bead -m convert_csv -p WORKSPACE_NAME PROJECT_NAME
 
     This should parse the csv, split the information into event-level, jet-level and constituent-level data.
 
 8. Then you can start data pre-processing based on the flags in the config file, using the command:
 
-        ```poetry run bead -m prepare_inputs -p WORKSPACE_NAME PROJECT_NAME```
+        poetry run bead -m prepare_inputs -p WORKSPACE_NAME PROJECT_NAME
 
     This will create the preprocessed tensors and save them as `.pt` files for events, jets and constituents separately.
 
 9. Once the tensors are prepared, you are now ready to train the model chosen in the configs along with all the specified training parameters, using:
 
-        ```poetry run bead -m train -p WORKSPACE_NAME PROJECT_NAME```
+        poetry run bead -m train -p WORKSPACE_NAME PROJECT_NAME
 
     This should store a trained pytorch model as a `.pt` file in the `.../PROJECT_NAME/output/models/` directory as well as train loss metrics in the `.../PROJECT_NAME/output/results/` directory.
 
 10. After a trained model has been saved, you are now ready to run inference like so:
 
-        ```poetry run bead -m detect -p WORKSPACE_NAME PROJECT_NAME```
+        poetry run bead -m detect -p WORKSPACE_NAME PROJECT_NAME
 
     This will save all model outputs in the `.../PROJECT_NAME/output/results/` directory.
 
 11. The plotting mode is called on the outputs from the previous step like so:
 
-        ```poetry run bead -m plot -p WORKSPACE_NAME PROJECT_NAME```
+        poetry run bead -m plot -p WORKSPACE_NAME PROJECT_NAME
 
     This will produce all plots.
 
     If you would like to only produce plots for training losses, use the `-o` flag like so:
 
-      ```poetry run bead -m plot -p WORKSPACE_NAME PROJECT_NAME -o train_metrics```
+              poetry run bead -m plot -p WORKSPACE_NAME PROJECT_NAME -o train_metrics
 
     If you only want plots from the inference, use:
 
-      ```poetry run bead -m plot -p WORKSPACE_NAME PROJECT_NAME -o test_metrics```
+              poetry run bead -m plot -p WORKSPACE_NAME PROJECT_NAME -o test_metrics
 
 12. Chaining modes to avoid repetitive running of commands is facilitated by the `-m chain` mode, which **requires** the `-o` flag to determine which modes need to be chained and in what order. Look at the example below.
 
@@ -103,11 +107,11 @@ For a full chain example, look at the [full chain example](#example) below!
 
 Say I created a new workspace that tests `SVJ` samples with `rinv=0.3` and a new project that runs the `ConvVAE` model for `500 epochs` with a learning rate of `1e-4` like so:
 
-      ```poetry run bead -m new_project -p svj_rinv3 convVae_ep500_lr4```
+     poetry run bead -m new_project -p svj_rinv3 convVae_ep500_lr4
 
 Then I moved the input `CSVs` to the `BEAD/bead/workspaces/svj_rinv3/data/csv/` directory. Then I want to run all the modes until the inference step, I just need to run the command:
 
-      ```poetry run bead -m chain -p svj_rinv3 convVae_ep500_lr4 -o convertcsv_prepareinputs_train_detect```
+      poetry run bead -m chain -p svj_rinv3 convVae_ep500_lr4 -o convertcsv_prepareinputs_train_detect
 
 and I'm good to log off for a snooze!
 
