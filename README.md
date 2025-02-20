@@ -41,7 +41,9 @@ For a full chain example, look at the [full chain example](#example) below!
 
 2. After installing poetry, clone this repository to your working directory.
 
-3. Enter the `BEAD/bead/` directory using `cd bead`
+3. Enter the `BEAD/bead/` directory using 
+
+        cd BEAD/bead
 
 4. Install the BEAD package using:
 
