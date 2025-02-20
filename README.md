@@ -36,7 +36,7 @@ For a full chain example, look at the [full chain example](#example) below!
 
 
 
-# Installation
+# Installing and Test Driving the package
 1. Poetry: BEAD is managed by the poetry package manager - this simplifies the task of creating an environment, installing the right dependencies, version incompatibilities etc. So first start with installing poetry according to the instructions given [here](https://python-poetry.org/docs/#installation)
 
 2. After installing poetry, clone this repository to your working directory.
