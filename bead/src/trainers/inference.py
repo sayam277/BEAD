@@ -314,31 +314,37 @@ def infer(
     if verbose:
         print(f"Training the model took {(end - start) / 60:.3} minutes")
 
+    # Convert all the data to numpy arrays
+    (reconstructed_data, mu_data, logvar_data, z0_data, zk_data, log_det_jacobian_data) = [np.array(x) for x in [reconstructed_data, mu_data, logvar_data, z0_data, zk_data, log_det_jacobian_data]]
+    
+    # Reshape the data
+    (reconstructed_data, mu_data, logvar_data, z0_data, zk_data) = [x.reshape(x.shape[0]*x.shape[1], *x.shape[2:]) for x in [reconstructed_data, mu_data, logvar_data, z0_data, zk_data]]
+
     # Save all the data
     save_dir = os.path.join(output_path, "results")
     np.save(
         os.path.join(save_dir, "reconstructed_data.npy"),
-        np.array(reconstructed_data),
+        reconstructed_data,
     )
     np.save(
         os.path.join(save_dir, "mu_data.npy"),
-        np.array(mu_data),
+        mu_data,
     )
     np.save(
         os.path.join(save_dir, "logvar_data.npy"),
-        np.array(logvar_data),
+        logvar_data,
     )
     np.save(
         os.path.join(save_dir, "z0_data.npy"),
-        np.array(z0_data),
+        z0_data,
     )
     np.save(
         os.path.join(save_dir, "zk_data.npy"),
-        np.array(zk_data),
+        zk_data,
     )
     np.save(
         os.path.join(save_dir, "log_det_jacobian_data.npy"),
-        np.array(log_det_jacobian_data),
+        log_det_jacobian_data,
     )
 
     helper.save_loss_components(loss_data=test_loss_data, component_names=loss_fn.component_names, suffix="test", save_dir=save_dir)
