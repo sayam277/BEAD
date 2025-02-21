@@ -34,7 +34,7 @@ For more information, follow the install instructions below go to the directory 
 
 <img width="1140" alt="Screenshot 2025-02-21 at 13 12 38" src="https://github.com/user-attachments/assets/f26f21a6-0ba3-4ba6-89e8-8ce147cc9d06" />
 
-For a full chain example, look at the [full chain example](#example) below!
+For a full chain example, look [below](#example)!
 
 
 
