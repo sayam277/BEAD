@@ -125,6 +125,11 @@ def infer(
     constituents_sig_label,
     ) = labels
 
+    # Save labels
+    np.save(os.path.join(output_path, "results", "events_label.npy"), np.concatenate([events_bkg_label, events_sig_label]))
+    np.save(os.path.join(output_path, "results", "jets_label.npy"), np.concatenate([jets_bkg_label, jets_sig_label]))
+    np.save(os.path.join(output_path, "results", "constituents_label.npy"), np.concatenate([constituents_bkg_label, constituents_sig_label]))
+
     # Reshape tensors to pass to conv layers
     if "ConvVAE" in config.model_name or "ConvAE" in config.model_name:
         (
@@ -151,7 +156,7 @@ def infer(
     # Create datasets
     ds = helper.create_datasets(*data, *labels)
 
-    # Concatenate events, jets and constituents respectively
+    # Concatenate events, jets and constituents respectively with their labels (here val is labels)
     ds_events = ConcatDataset([ds["events_train"], ds["events_val"]])
     ds_jets = ConcatDataset([ds["jets_train"], ds["jets_val"]])
     ds_constituents = ConcatDataset([ds["constituents_train"], ds["constituents_val"]])

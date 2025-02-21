@@ -2,7 +2,7 @@
 # === Configuration options ===
 
 def set_config(c):
-    c.workspace_name               = "dq"
+    c.workspace_name               = "dqm"
     c.project_name                 = "test"
     c.file_type                    = "h5"
     c.parallel_workers             = 4

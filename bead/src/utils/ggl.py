@@ -524,6 +524,13 @@ def run_inference(paths, config, verbose: bool = False):
     *data_bkg, _, _, _ = data_bkg
     *gen_labels, _, _, _ = gen_labels
 
+    # Save generator labels
+    labels_path = os.path.join(paths["data_path"], config.file_type, "tensors", "processed")
+    gen_label_events, gen_label_jets, gen_label_constituents = gen_labels
+    np.save(os.path.join(labels_path, "gen_label_events.npy"), gen_label_events.detach().cpu().numpy())
+    np.save(os.path.join(labels_path, "gen_label_jets.npy"), gen_label_jets.detach().cpu().numpy())
+    np.save(os.path.join(labels_path, "gen_label_constituents.npy"), gen_label_constituents.detach().cpu().numpy())
+
     # Create bkg-sig labels
     data_bkg = helper.add_sig_bkg_label(data_bkg, label="bkg")
     data_sig = helper.add_sig_bkg_label(data_sig, label="sig")
