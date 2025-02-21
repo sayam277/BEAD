@@ -32,6 +32,8 @@ BEAD has five main running modes:
 
 For more information, follow the install instructions below go to the directory `./BEAD/bead/` and then run the command ```poetry run bead -h``` to get detailed instructions on running the package and the available customizations.
 
+<img width="1140" alt="Screenshot 2025-02-21 at 13 12 38" src="https://github.com/user-attachments/assets/f26f21a6-0ba3-4ba6-89e8-8ce147cc9d06" />
+
 For a full chain example, look at the [full chain example](#example) below!
 
 
