@@ -184,6 +184,8 @@ def create_default_config(workspace_name: str, project_name: str) -> str:
 # === Configuration options ===
 
 def set_config(c):
+    c.workspace_name               = "{workspace_name}"
+    c.project_name                 = "{project_name}"
     c.file_type                    = "h5"
     c.parallel_workers             = 4
     c.num_jets                     = 3
@@ -251,8 +253,8 @@ def create_new_project(
         os.path.join(workspace_path, "data", "npy", "tensors", "processed"),
         os.path.join(project_path, "config"),
         os.path.join(project_path, "output", "results"),
-        os.path.join(project_path, "output", "plots", "training"),
-        os.path.join(project_path, "output", "plots", "eval"),
+        os.path.join(project_path, "output", "plots", "latent_space"),
+        os.path.join(project_path, "output", "plots", "loss"),
         os.path.join(project_path, "output", "models"),
     ]
 
@@ -552,50 +554,24 @@ def run_inference(paths, config, verbose: bool = False):
         print("Inference failed")
 
 
-def run_plots(output_path, config, verbose: bool):
+def run_plots(paths, config, verbose: bool):
     """Main function calling the two plotting functions, ran when --mode=plot is selected.
        The two main functions this calls are: `ggl.plotter` and `ggl.loss_plotter`
 
     Args:
-        prepare_inputt_path (string): Selects base path for determining output path
+        paths (dictionary): Dictionary of common paths used in the pipeline
         config (dataClass): Base class selecting user inputs
         verbose (bool): If True, prints out more information
     """
-    if verbose:
-        print("Plotting...")
-        print(f"Saving plots to {output_path}")
-    ggl.loss_plotter(
-        os.path.join(output_path, "training", "loss_data.npy"), output_path, config
-    )
-    ggl.plotter(output_path, config)
-
-
-def plotter(output_path, config):
-    """Calls `plotting.plot()`
-
-    Args:
-        output_path (string): Path to the output directory
-        config (dataClass): Base class selecting user inputs
-
-    """
-
-    plotting.plot(output_path, config)
-    print("=== Done ===")
-    print("Your plots are available in:", os.path.join(output_path, "plotting"))
-
-
-def loss_plotter(path_to_loss_data, output_path, config):
-    """Calls `plotting.loss_plot()`
-
-    Args:
-        path_to_loss_data (string): Path to the values for the loss plot
-        output_path (string): Path to output the data
-        config (dataClass): Base class selecting user inputs
-
-    Returns:
-        .pdf file: Plot containing the loss curves
-    """
-    return plotting.loss_plot(path_to_loss_data, output_path, config)
+    input_path = os.path.join(paths["project_path"], "output", "results")
+    output_path = os.path.join(paths["project_path"], "output", "plots", "loss")
+    
+    try:
+        plotting.plot_losses(input_path, output_path, config, verbose)
+    except FileNotFoundError as e:
+        print(e)
+        sys.exit(1)
+    print("Plotting complete")
 
 
 def run_diagnostics(project_path, verbose: bool):

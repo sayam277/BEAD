@@ -2,6 +2,8 @@
 # === Configuration options ===
 
 def set_config(c):
+    c.workspace_name               = "dq"
+    c.project_name                 = "test"
     c.file_type                    = "h5"
     c.parallel_workers             = 4
     c.num_jets                     = 3
