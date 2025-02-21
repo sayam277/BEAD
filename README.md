@@ -123,7 +123,38 @@ Then I moved the input `CSVs` to the `BEAD/bead/workspaces/svj_rinv3/data/csv/` 
 
         poetry run bead -m chain -p svj_rinv3 convVae_ep500_lr4 -o convertcsv_prepareinputs_train_detect
 
-and I'm good to log off for a snooze!
+and I'm good to log off for a snooze! I come back, run the plotting mode:
+
+        poetry run bead -m plot -p svj_rinv3 convVae_ep500_lr4
+
+Looking at the plots, I feel maybe the ConvVAE augmented with the planar flow would do better on the same data. Since I don't want to change the input data, I don't need to generate it again, I can use the same workspace and just create a new project. Lets name the new project `PlanarFlowConvVAE_ep500_lr4`:
+
+        poetry run bead -m new_project -p svj_rinv3 PlanarFlowConvVae_ep500_lr4
+
+Now I go into the `.../workspaces/svj_rinv3/PlanarFlowConvVae_ep500_lr4/config/PlanarFlowConvVae_ep500_lr4_config.py` file and change the following line:
+
+        c.model_name                   = "ConvVAE"
+
+to
+
+        c.model_name                   = "Planar_ConvVAE"
+
+Since that is the name of the model I want to use in the `...src/models/models.py` file.
+
+
+Then I want to generate plots for the new mmodel so I can compare them to the previous run. I want to use the same inputs, so I don't need to use the `convert_csv` and `prepare_inputs` modes. I can directly run the command:
+
+     poetry run bead -m chain -p svj_rinv3 PlanarFlowConvVae_ep500_lr4 -o train_detect_plot
+
+After my mandatory training snooze, I come back to plots and that makes me realize that I should be preprocessing the inputs differently to get better results. Since I want to change the inputs I will have to create a new workspace and project altogehter. Let's say I want to use the Standard Scaler on the inputs instead of the default normalization, and I want to test on the same SVJ samples. I need to run:
+
+        poetry run bead -m new_project -p StandardScaled_svj_rinv3 PlanarFlowConvVae_ep500_lr4
+
+Then I go back into the config file and make the changes like before and on top of that, change the `normalizations` flag to `standard`. Since this is the first project of this new workspace, I need to run:
+
+        poetry run bead -m chain -p StandardScaled_svj_rinv3 PlanarFlowConvVae_ep500_lr4 -o convertcsv_prepareinputs_train_detect_plot
+
+followed by.. ofc, the mandatory snooze!
 
 *Happy hunting!*
  
