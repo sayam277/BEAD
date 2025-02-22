@@ -41,23 +41,27 @@ For a full chain example, look [below](#example)!
 # Installing and Test Driving the package
 1. Poetry: BEAD is managed by the poetry package manager - this simplifies the task of creating an environment, installing the right dependencies, version incompatibilities etc. So first start with installing poetry according to the instructions given [here](https://python-poetry.org/docs/#installation)
 
-2. After installing poetry, clone this repository to your working directory.
+2. Trimap is a visualization tool that is used in the package but is currently problematic to install via poetry due to `llvmlite==0.34.0` version issue on Mac M1. As a workaround to this either `pip install trimap` or if you are running poetry inside a `conda` env, install trimap with BioConda as described [here](https://bioconda.github.io/recipes/trimap/README.html), before moving to the next step.
 
-3. Enter the `BEAD/bead/` directory using 
+Alternatively, if you would like to skip using trimap, please comment out all the code chunks that use trimap in `.../utils/plotting.py`, after cloning the repo in the next step.  
+
+3. After installing poetry, clone this repository to your working directory.
+
+4. Enter the `BEAD/bead/` directory using 
 
         cd BEAD/bead
 
-4. Install the BEAD package using:
+5. Install the BEAD package using:
 
         poetry install
 
-5. You are now ready to start running the package! As a first step try the following command:
+6. You are now ready to start running the package! As a first step try the following command:
 
         poetry run bead -h
 
     This should bring up the help window that explains all the various running modes of bead.
 
-6. Start with creating a new workspace and project like so:
+7. Start with creating a new workspace and project like so:
 
         poetry run bead -m new_project -p <WORKSPACE_NAME> <PROJECT_NAME>
 
