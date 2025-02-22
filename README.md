@@ -43,7 +43,7 @@ For a full chain example, look [below](#example)!
 
 2. Trimap is a visualization tool that is used in the package but is currently problematic to install via poetry due to `llvmlite==0.34.0` version issue on Mac M1. As a workaround to this either `pip install trimap` or if you are running poetry inside a `conda` env, install trimap with BioConda as described [here](https://bioconda.github.io/recipes/trimap/README.html), before moving to the next step.
 
-Alternatively, if you would like to skip using trimap, please comment out all the code chunks that use trimap in `.../utils/plotting.py`, after cloning the repo in the next step.  
+   Alternatively, if you would like to skip using trimap, please comment out all the code chunks that use trimap in `.../utils/plotting.py`, after cloning the repo in the next step.  
 
 3. After installing poetry, clone this repository to your working directory.
 
