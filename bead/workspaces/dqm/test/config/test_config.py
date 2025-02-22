@@ -23,6 +23,7 @@ def set_config(c):
     c.batch_size                   = 2
     c.early_stopping               = True
     c.lr_scheduler                 = True
+    c.latent_space_plot_style      = "trimap"
 
 
 

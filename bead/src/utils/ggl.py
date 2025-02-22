@@ -205,6 +205,7 @@ def set_config(c):
     c.batch_size                   = 2
     c.early_stopping               = True
     c.lr_scheduler                 = True
+    c.latent_space_plot_style      = "trimap"
 
 
 
@@ -527,9 +528,9 @@ def run_inference(paths, config, verbose: bool = False):
     # Save generator labels
     labels_path = os.path.join(paths["data_path"], config.file_type, "tensors", "processed")
     gen_label_events, gen_label_jets, gen_label_constituents = gen_labels
-    np.save(os.path.join(labels_path, "gen_label_events.npy"), gen_label_events.detach().cpu().numpy())
-    np.save(os.path.join(labels_path, "gen_label_jets.npy"), gen_label_jets.detach().cpu().numpy())
-    np.save(os.path.join(labels_path, "gen_label_constituents.npy"), gen_label_constituents.detach().cpu().numpy())
+    np.save(os.path.join(labels_path, "gen_label_event.npy"), gen_label_events.detach().cpu().numpy())
+    np.save(os.path.join(labels_path, "gen_label_jet.npy"), gen_label_jets.detach().cpu().numpy())
+    np.save(os.path.join(labels_path, "gen_label_constituent.npy"), gen_label_constituents.detach().cpu().numpy())
 
     # Create bkg-sig labels
     data_bkg = helper.add_sig_bkg_label(data_bkg, label="bkg")
@@ -570,14 +571,30 @@ def run_plots(paths, config, verbose: bool):
         config (dataClass): Base class selecting user inputs
         verbose (bool): If True, prints out more information
     """
-    input_path = os.path.join(paths["project_path"], "output", "results")
-    output_path = os.path.join(paths["project_path"], "output", "plots", "loss")
+    input_path = os.path.join(paths["output_path"], "results")
+    output_path = os.path.join(paths["output_path"], "plots", "loss")
     
     try:
         plotting.plot_losses(input_path, output_path, config, verbose)
     except FileNotFoundError as e:
         print(e)
         sys.exit(1)
+    try:
+        plotting.plot_latent_variables(config, paths, verbose)
+    except ValueError as e:
+        print(e)
+        sys.exit(1)
+    try:
+        plotting.plot_mu_logvar(config, paths, verbose)
+    except ValueError as e:
+        print(e)
+        sys.exit(1)
+    # try:
+    #     plotting.plot_roc_curve(config, paths, verbose)
+    # except ValueError as e:
+    #     print(e)
+    #     sys.exit(1)
+    
     print("Plotting complete")
 
 

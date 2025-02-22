@@ -1021,6 +1021,15 @@ def save_loss_components(loss_data, component_names, suffix, save_dir="loss_outp
     # Each element in 'components' is a tuple containing that component from every iteration.
     components = list(zip(*loss_data))
 
+    def reshape_tensor_lists(original_list):
+        transformed_list = []
+        for inner_list in original_list:
+            # Concatenate all tensors in the inner list along the 0th dimension
+            concatenated_tensor = torch.cat(inner_list, dim=0)
+            transformed_list.append([concatenated_tensor])
+        return transformed_list
+    # components = reshape_tensor_lists(components)
+
     # Process and save each component.
     for name, comp in zip(component_names, components):
         # Convert each element to a NumPy array if it's a PyTorch tensor.
