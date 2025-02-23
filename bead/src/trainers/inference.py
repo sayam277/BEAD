@@ -184,7 +184,7 @@ def infer(
         print("Constituents - sig labels shape:   ", constituents_sig_label.shape)
 
     # Calculate the input shapes to load the model
-    in_shape = helper.calculate_in_shape(data, config)
+    in_shape = helper.calculate_in_shape(data, config, test_mode=True)
 
     # Load the model and set to eval mode for inference
     model = helper.load_model(model_path=model_path, in_shape=in_shape, config=config)
@@ -198,7 +198,7 @@ def infer(
         # Pushing input data into the torch-DataLoader object and combines into one DataLoader object (a basic wrapper
         # around several DataLoader objects).
         print(
-            "Loading data into DataLoader and using batch size of ", config.batch_size
+            "Loading data into DataLoader and using batch size of ", 1
         )
 
     if config.deterministic_algorithm:
@@ -215,7 +215,7 @@ def infer(
         test_dl_list = [
             DataLoader(
                 ds,
-                batch_size=config.batch_size,
+                batch_size=1, # since we want the loss for every event, which then becomes the anomaly metric
                 shuffle=False,
                 worker_init_fn=seed_worker,
                 generator=g,
@@ -227,7 +227,7 @@ def infer(
         
     else:
         test_dl_list = [
-            DataLoader(ds, batch_size=config.batch_size, shuffle=False, drop_last=True, num_workers=config.parallel_workers,)
+            DataLoader(ds, batch_size=1, shuffle=False, drop_last=True, num_workers=config.parallel_workers,)
             for ds in [ds["events"], ds["jets"], ds["constituents"]]
         ]
         

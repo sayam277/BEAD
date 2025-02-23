@@ -589,11 +589,11 @@ def run_plots(paths, config, verbose: bool):
     except ValueError as e:
         print(e)
         sys.exit(1)
-    # try:
-    #     plotting.plot_roc_curve(config, paths, verbose)
-    # except ValueError as e:
-    #     print(e)
-    #     sys.exit(1)
+    try:
+        plotting.plot_roc_curve(config, paths, verbose)
+    except ValueError as e:
+        print(e)
+        sys.exit(1)
     
     print("Plotting complete")
 

@@ -7,6 +7,7 @@ from tqdm.rich import tqdm
 
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.metrics import roc_curve, auc
 import trimap  
 
 
@@ -404,7 +405,10 @@ def plot_roc_curve(config, paths, verbose: bool = False):
         raise ValueError("Ground truth labels must be a 1D array.")
     
     # Define the loss component prefixes to search for.
-    loss_components = ['loss', 'rec', 'kl', 'emd', 'l1', 'l2']
+    loss_components = ['loss', 'reco', 'kl', 'emd', 'l1', 'l2']
+
+    # Iterate over each loss component and generate ROC curve.
+    plt.figure(figsize=(8, 6))
 
     for component in loss_components:
         file_path = os.path.join(output_dir, f"{component}_test.npy")
@@ -429,17 +433,17 @@ def plot_roc_curve(config, paths, verbose: bool = False):
         roc_auc = auc(fpr, tpr)
         
         # Plot the ROC curve.
-        plt.figure(figsize=(8, 6))
-        plt.plot(fpr, tpr, label=f'ROC (AUC = {roc_auc:.2f})', lw=2)
-        plt.plot([0, 1], [0, 1], 'k--', lw=2, label='Random Guess')
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        plt.title(f"{component.capitalize()} ROC Curve - {config.project_name}")
-        plt.legend(loc="lower right")
-        plt.tight_layout()
-        
-        # Save the plot as a PDF file.
-        save_filename = os.path.join(paths["output_path"], "plots", "loss", f"{component}_roc.pdf")
-        plt.savefig(save_filename)
-        plt.close()
+        plt.plot(fpr, tpr, label=f'{component.capitalize()}) AUC = {roc_auc:.2f}', lw=2)
+    
+    plt.plot([0, 1], [0, 1], 'k--', lw=2, label='Random Guess')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title(f"ROC Curve - {config.project_name}")
+    plt.legend(loc="lower right")
+    plt.tight_layout()
+    
+    # Save the plot as a PDF file.
+    save_filename = os.path.join(paths["output_path"], "plots", "loss", "roc.pdf")
+    plt.savefig(save_filename)
+    plt.close()
 

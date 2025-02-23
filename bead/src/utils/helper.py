@@ -695,16 +695,21 @@ def create_datasets(
     return datasets
 
 
-def calculate_in_shape(data, config):
+def calculate_in_shape(data, config, test_mode=False):
     """Calculates the input shapes for the models based on the data.
 
     Args:
         data (ndarray): The data you wish to calculate the input shapes for.
         config (dataClass): Base class selecting user inputs.
+        test_mode (bool): A flag to indicate if the function is being called in test mode.
 
     Returns:
         tuple: A tuple containing the input shapes for the models.
     """
+    if test_mode:
+        bs = 1
+    else:
+        bs = config.batch_size
     (
         events_train,
         jets_train,
@@ -717,9 +722,9 @@ def calculate_in_shape(data, config):
     # Get the shapes of the data
     # Calculate the input shapes to initialize the model
     
-    in_shape_e = [config.batch_size] + list(events_train.shape[1:])
-    in_shape_j = [config.batch_size] + list(jets_train.shape[1:])
-    in_shape_c = [config.batch_size] + list(constituents_train.shape[1:])
+    in_shape_e = [bs] + list(events_train.shape[1:])
+    in_shape_j = [bs] + list(jets_train.shape[1:])
+    in_shape_c = [bs] + list(constituents_train.shape[1:])
     
     if config.model_name == "pj_ensemble":        
         # Make in_shape tuple
@@ -1021,13 +1026,13 @@ def save_loss_components(loss_data, component_names, suffix, save_dir="loss_outp
     # Each element in 'components' is a tuple containing that component from every iteration.
     components = list(zip(*loss_data))
 
-    def reshape_tensor_lists(original_list):
-        transformed_list = []
-        for inner_list in original_list:
-            # Concatenate all tensors in the inner list along the 0th dimension
-            concatenated_tensor = torch.cat(inner_list, dim=0)
-            transformed_list.append([concatenated_tensor])
-        return transformed_list
+    # def reshape_tensor_lists(original_list):
+    #     transformed_list = []
+    #     for inner_list in original_list:
+    #         # Concatenate all tensors in the inner list along the 0th dimension
+    #         concatenated_tensor = torch.cat(inner_list, dim=0)
+    #         transformed_list.append([concatenated_tensor])
+    #     return transformed_list
     # components = reshape_tensor_lists(components)
 
     # Process and save each component.
