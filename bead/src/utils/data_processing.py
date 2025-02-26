@@ -161,13 +161,26 @@ def parallel_select_top_jets_and_constituents(
             f"Selecting top {n_jets} jets and their top {n_constits} constituents in parallel..."
         )
 
-    # Group jets and constituents by event ID
-    event_ids = np.unique(jets[:, 0])
-    event_data = []
+    # Sort jets and constituents by event ID
+    jets_sorted = jets[jets[:, 0].argsort()]
+    constituents_sorted = constituents[constituents[:, 0].argsort()]
 
+    # Group jets and constituents by event ID
+    event_ids = np.unique(jets_sorted[:, 0])
+    
+    event_data = []
     for evt_id in event_ids:
-        evt_jets = jets[jets[:, 0] == evt_id]
-        evt_constits = constituents[constituents[:, 0] == evt_id]
+        # Find slice indices for jets corresponding to evt_id
+        left_j = np.searchsorted(jets_sorted[:, 0], evt_id, side='left')
+        right_j = np.searchsorted(jets_sorted[:, 0], evt_id, side='right')
+        evt_jets = jets_sorted[left_j:right_j]
+
+        # Find slice indices for constituents corresponding to evt_id
+        left_c = np.searchsorted(constituents_sorted[:, 0], evt_id, side='left')
+        right_c = np.searchsorted(constituents_sorted[:, 0], evt_id, side='right')
+        evt_constits = constituents_sorted[left_c:right_c]
+
+        # Append the tuple (evt_id, evt_jets, evt_constits)
         event_data.append((evt_id, evt_jets, evt_constits))
 
     # Parallel processing of events

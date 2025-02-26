@@ -406,6 +406,7 @@ def load_augment_tensors(folder_path, keyword):
     file_categories = {cat: {gen: [] for gen in generators} for cat in categories}
 
     # Iterate over files in the folder.
+    keyword_found = False
     for filename in os.listdir(folder_path):
         # Only consider files ending with '.pt' that contain the specified keyword.
         if not filename.endswith(".pt"):
@@ -424,7 +425,9 @@ def load_augment_tensors(folder_path, keyword):
                         file_categories[cat][gen].append((full_path, gen_val))
                 # Note: if a file contains multiple generator substrings (unlikely), it will be added
                 # to all matching generator groups.
-
+    if not keyword_found:
+        raise ValueError("No files found with the specified keyword, " + keyword)
+    
     # For each category in 'bkg_train', ensure that each generator type has at least one file.
     if keyword == "bkg_train":
         for cat in categories:

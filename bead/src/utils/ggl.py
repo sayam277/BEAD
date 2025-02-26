@@ -188,6 +188,7 @@ def set_config(c):
     c.project_name                 = "{project_name}"
     c.file_type                    = "h5"
     c.parallel_workers             = 4
+    c.chunk_size                   = 20000
     c.num_jets                     = 3
     c.num_constits                 = 15
     c.latent_space_size            = 15
@@ -322,6 +323,7 @@ def convert_csv(paths, config, verbose: bool = False):
                     output_prefix=output_prefix,
                     out_path=output_path,
                     file_type=config.file_type,
+                    chunk_size=config.chunk_size,
                     n_workers=config.parallel_workers,
                     verbose=verbose,
                 )
