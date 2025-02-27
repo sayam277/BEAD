@@ -6,6 +6,7 @@ def set_config(c):
     c.project_name                 = "test"
     c.file_type                    = "h5"
     c.parallel_workers             = 4
+    c.chunk_size                   = 10000
     c.num_jets                     = 3
     c.num_constits                 = 15
     c.latent_space_size            = 15

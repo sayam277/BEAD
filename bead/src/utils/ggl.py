@@ -188,7 +188,7 @@ def set_config(c):
     c.project_name                 = "{project_name}"
     c.file_type                    = "h5"
     c.parallel_workers             = 4
-    c.chunk_size                   = 20000
+    c.chunk_size                   = 10000
     c.num_jets                     = 3
     c.num_constits                 = 15
     c.latent_space_size            = 15
@@ -402,8 +402,8 @@ def prepare_inputs(paths, config, verbose: bool = False):
 
     for keyword in keywords:
         try:
-            events_tensor, jets_tensor, constituents_tensor = helper.load_augment_tensors(
-                in_path, keyword
+            events_tensor, jets_tensor, constituents_tensor = (
+                helper.load_augment_tensors(in_path, keyword)
             )
             if verbose:
                 print(f"Data augmented successfully for {keyword} files")
@@ -413,16 +413,21 @@ def prepare_inputs(paths, config, verbose: bool = False):
             if keyword == "bkg_train":
                 torch.save(events_tensor, out_path + f"/bkg_train_events.pt")
                 torch.save(jets_tensor, out_path + f"/bkg_train_jets.pt")
-                torch.save(constituents_tensor, out_path + f"/bkg_train_constituents.pt")
+                torch.save(
+                    constituents_tensor, out_path + f"/bkg_train_constituents.pt"
+                )
             elif keyword == "bkg_test":
                 torch.save(events_tensor, out_path + f"/bkg_test_genLabeled_events.pt")
                 torch.save(jets_tensor, out_path + f"/bkg_test_genLabeled_jets.pt")
-                torch.save(constituents_tensor, out_path + f"/bkg_test_genLabeled_constituents.pt")
+                torch.save(
+                    constituents_tensor,
+                    out_path + f"/bkg_test_genLabeled_constituents.pt",
+                )
 
         except ValueError as e:
             print(e)
             sys.exit(1)
-    
+
     keyword = "sig_test"
     try:
         events_tensor, jets_tensor, constituents_tensor = helper.load_tensors(
@@ -513,33 +518,48 @@ def run_inference(paths, config, verbose: bool = False):
         config (dataClass): Base class selecting user inputs
         verbose (bool): If True, prints out more information
     """
-    
+
     start = time.time()
 
     print("Inference...")
 
     # Preprocess the data for training
-    data_bkg = data_processing.preproc_inputs(paths, config, keyword="bkg_test", verbose=verbose)
-    data_sig = data_processing.preproc_inputs(paths, config, keyword="sig_test", verbose=verbose)
+    data_bkg = data_processing.preproc_inputs(
+        paths, config, keyword="bkg_test", verbose=verbose
+    )
+    data_sig = data_processing.preproc_inputs(
+        paths, config, keyword="sig_test", verbose=verbose
+    )
 
     # Split Generator labels from bkg_test data
-    data_bkg, gen_labels = helper.data_label_split(data_bkg+data_bkg)
+    data_bkg, gen_labels = helper.data_label_split(data_bkg + data_bkg)
     *data_bkg, _, _, _ = data_bkg
     *gen_labels, _, _, _ = gen_labels
 
     # Save generator labels
-    labels_path = os.path.join(paths["data_path"], config.file_type, "tensors", "processed")
+    labels_path = os.path.join(
+        paths["data_path"], config.file_type, "tensors", "processed"
+    )
     gen_label_events, gen_label_jets, gen_label_constituents = gen_labels
-    np.save(os.path.join(labels_path, "gen_label_event.npy"), gen_label_events.detach().cpu().numpy())
-    np.save(os.path.join(labels_path, "gen_label_jet.npy"), gen_label_jets.detach().cpu().numpy())
-    np.save(os.path.join(labels_path, "gen_label_constituent.npy"), gen_label_constituents.detach().cpu().numpy())
+    np.save(
+        os.path.join(labels_path, "gen_label_event.npy"),
+        gen_label_events.detach().cpu().numpy(),
+    )
+    np.save(
+        os.path.join(labels_path, "gen_label_jet.npy"),
+        gen_label_jets.detach().cpu().numpy(),
+    )
+    np.save(
+        os.path.join(labels_path, "gen_label_constituent.npy"),
+        gen_label_constituents.detach().cpu().numpy(),
+    )
 
     # Create bkg-sig labels
     data_bkg = helper.add_sig_bkg_label(data_bkg, label="bkg")
     data_sig = helper.add_sig_bkg_label(data_sig, label="sig")
 
     data = data_bkg + data_sig
-    
+
     # Output path
     output_path = os.path.join(paths["project_path"], "output")
     model_path = os.path.join(output_path, "models", "model.pt")
@@ -549,7 +569,7 @@ def run_inference(paths, config, verbose: bool = False):
 
     done = False
     done = inference.infer(*data, model_path, output_path, config, verbose)
-    
+
     end = time.time()
 
     if done:
@@ -575,7 +595,7 @@ def run_plots(paths, config, verbose: bool):
     """
     input_path = os.path.join(paths["output_path"], "results")
     output_path = os.path.join(paths["output_path"], "plots", "loss")
-    
+
     try:
         plotting.plot_losses(input_path, output_path, config, verbose)
     except FileNotFoundError as e:
@@ -596,7 +616,7 @@ def run_plots(paths, config, verbose: bool):
     except ValueError as e:
         print(e)
         sys.exit(1)
-    
+
     print("Plotting complete")
 
 
@@ -618,15 +638,17 @@ def run_diagnostics(project_path, verbose: bool):
     diagnostics.nap_diagnose(input_path, output_path)
 
 
-def run_full_chain(workspace_name: str, 
-                 project_name: str, 
-                 paths: dict, 
-                 config: dict, 
-                 options: str, 
-                 verbose: bool = False) -> None:
+def run_full_chain(
+    workspace_name: str,
+    project_name: str,
+    paths: dict,
+    config: dict,
+    options: str,
+    verbose: bool = False,
+) -> None:
     """
     Execute a sequence of operations based on the provided options string.
-    
+
     Args:
         workspace_name: Name of the workspace for new projects
         project_name: Name of the project for new projects
@@ -634,7 +656,7 @@ def run_full_chain(workspace_name: str,
         config: Configuration dictionary for operations
         options: Underscore-separated string specifying the workflow sequence
         verbose: Whether to show verbose output
-    
+
     Example:
         run_full_chain("my_workspace", "my_project", paths, config,
                       "newproject_convertcsv_prepareinputs_train_detect", verbose=True)
@@ -647,63 +669,46 @@ def run_full_chain(workspace_name: str,
         "train": "train",
         "detect": "detect",
         "plot": "plot",
-        "diagnostics": "diagnostics"
+        "diagnostics": "diagnostics",
     }
 
     # Map modes to their corresponding functions and arguments
     MODE_OPERATIONS = {
         "new_project": {
             "func": create_new_project,
-            "args": (workspace_name, project_name, verbose)
+            "args": (workspace_name, project_name, verbose),
         },
-        "convert_csv": {
-            "func": convert_csv,
-            "args": (paths, config, verbose)
-        },
-        "prepare_inputs": {
-            "func": prepare_inputs,
-            "args": (paths, config, verbose)
-        },
-        "train": {
-            "func": run_training,
-            "args": (paths, config, verbose)
-        },
-        "detect": {
-            "func": run_inference,
-            "args": (paths, config, verbose)
-        },
-        "plot": {
-            "func": run_plots,
-            "args": (paths, config, verbose)
-        },
-        "diagnostics": {
-            "func": run_diagnostics,
-            "args": (paths, config, verbose)
-        }
+        "convert_csv": {"func": convert_csv, "args": (paths, config, verbose)},
+        "prepare_inputs": {"func": prepare_inputs, "args": (paths, config, verbose)},
+        "train": {"func": run_training, "args": (paths, config, verbose)},
+        "detect": {"func": run_inference, "args": (paths, config, verbose)},
+        "plot": {"func": run_plots, "args": (paths, config, verbose)},
+        "diagnostics": {"func": run_diagnostics, "args": (paths, config, verbose)},
     }
 
     # Split and validate options
     workflow = options.split("_")
     valid_options = set(OPTION_TO_MODE.keys())
-    
+
     for step in workflow:
         if step not in valid_options:
-            raise ValueError(f"Invalid option '{step}' in options string. "
-                             f"Valid options: {list(OPTION_TO_MODE.keys())}")
+            raise ValueError(
+                f"Invalid option '{step}' in options string. "
+                f"Valid options: {list(OPTION_TO_MODE.keys())}"
+            )
 
     # Execute workflow steps in sequence
     for step in workflow:
         mode_name = OPTION_TO_MODE[step]
         operation = MODE_OPERATIONS[mode_name]
-        
+
         if verbose:
             print(f"\n{'='*40}")
             print(f"Executing step: {mode_name.replace('_', ' ').title()}")
             print(f"{'='*40}")
-            
+
         # Execute the operation with its arguments
         operation["func"](*operation["args"])
-        
+
         if verbose:
             print(f"Completed step: {mode_name.replace('_', ' ').title()}\n")
-

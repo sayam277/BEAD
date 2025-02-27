@@ -428,7 +428,7 @@ def load_augment_tensors(folder_path, keyword):
                 # to all matching generator groups.
     if not keyword_found:
         raise ValueError("No files found with the specified keyword, " + keyword)
-    
+
     # For each category in 'bkg_train', ensure that each generator type has at least one file.
     if keyword == "bkg_train":
         for cat in categories:
@@ -601,10 +601,12 @@ def add_sig_bkg_label(tensors: tuple, label: str) -> tuple:
         """Helper function to add the feature to a single tensor."""
         # Get shape for the new feature tensor (same as input tensor but last dim=1)
         feature_shape = tensor.shape[:-1] + (1,)
-        
+
         # Create a tensor filled with the feature value, matching device and dtype
-        feature = torch.full(feature_shape, feature_value, dtype=tensor.dtype, device=tensor.device)
-        
+        feature = torch.full(
+            feature_shape, feature_value, dtype=tensor.dtype, device=tensor.device
+        )
+
         # Concatenate along the last dimension
         return torch.cat([tensor, feature], dim=-1)
 
@@ -636,23 +638,23 @@ def data_label_split(data):
         jets_val,
         constituents_val,
     ) = data
-    
+
     data = (
-        events_train[:,:-1],
-        jets_train[:,:,:-1],
-        constituents_train[:,:,:-1],
-        events_val[:,:-1],
-        jets_val[:,:,:-1],
-        constituents_val[:,:,:-1],
+        events_train[:, :-1],
+        jets_train[:, :, :-1],
+        constituents_train[:, :, :-1],
+        events_val[:, :-1],
+        jets_val[:, :, :-1],
+        constituents_val[:, :, :-1],
     )
 
     labels = (
-        events_train[:,-1],
-        jets_train[:,0,-1].squeeze(),
-        constituents_train[:,0,-1].squeeze(),
-        events_val[:,-1],
-        jets_val[:,0,-1].squeeze(),
-        constituents_val[:,0,-1].squeeze(),
+        events_train[:, -1],
+        jets_train[:, 0, -1].squeeze(),
+        constituents_train[:, 0, -1].squeeze(),
+        events_val[:, -1],
+        jets_val[:, 0, -1].squeeze(),
+        constituents_val[:, 0, -1].squeeze(),
     )
     return data, labels
 
@@ -662,25 +664,36 @@ class CustomDataset(Dataset):
     def __init__(self, data_tensor, label_tensor):
         self.data = data_tensor
         self.labels = label_tensor
-        
+
     def __len__(self):
         return len(self.data)
-    
+
     def __getitem__(self, idx):
         return self.data[idx], self.labels[idx]
 
+
 # Function to create datasets
 def create_datasets(
-    events_train, jets_train, constituents_train,
-    events_val, jets_val, constituents_val,
-    events_train_label, jets_train_label, constituents_train_label,
-    events_val_label, jets_val_label, constituents_val_label
+    events_train,
+    jets_train,
+    constituents_train,
+    events_val,
+    jets_val,
+    constituents_val,
+    events_train_label,
+    jets_train_label,
+    constituents_train_label,
+    events_val_label,
+    jets_val_label,
+    constituents_val_label,
 ):
 
     # Create datasets for training data
     events_train_dataset = CustomDataset(events_train, events_train_label)
     jets_train_dataset = CustomDataset(jets_train, jets_train_label)
-    constituents_train_dataset = CustomDataset(constituents_train, constituents_train_label)
+    constituents_train_dataset = CustomDataset(
+        constituents_train, constituents_train_label
+    )
 
     # Create datasets for validation data
     events_val_dataset = CustomDataset(events_val, events_val_label)
@@ -725,12 +738,12 @@ def calculate_in_shape(data, config, test_mode=False):
 
     # Get the shapes of the data
     # Calculate the input shapes to initialize the model
-    
+
     in_shape_e = [bs] + list(events_train.shape[1:])
     in_shape_j = [bs] + list(jets_train.shape[1:])
     in_shape_c = [bs] + list(constituents_train.shape[1:])
-    
-    if config.model_name == "pj_ensemble":        
+
+    if config.model_name == "pj_ensemble":
         # Make in_shape tuple
         in_shape = (in_shape_e, in_shape_j, in_shape_c)
 
@@ -930,18 +943,18 @@ class EarlyStopping:
 class LRScheduler:
     """
     A learning rate scheduler that adjusts the learning rate of an optimizer based on the training loss.
-    
+
     Args:
         optimizer (torch.optim.Optimizer): The optimizer whose learning rate will be adjusted.
         patience (int): The number of epochs with no improvement in training loss after which the learning rate
             will be reduced.
         min_lr (float, optional): The minimum learning rate that can be reached (default: 1e-6).
         factor (float, optional): The factor by which the learning rate will be reduced (default: 0.1).
-    
+
     Attributes:
         lr_scheduler (torch.optim.lr_scheduler.ReduceLROnPlateau): The PyTorch learning rate scheduler that
             actually performs the adjustments.
-    
+
     Example usage:
         optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
         lr_scheduler = LRScheduler(optimizer, patience=3, min_lr=1e-6, factor=0.5)
@@ -992,7 +1005,7 @@ def load_model(model_path: str, in_shape, config):
 
     else:
         model = model_object(in_shape, z_dim=config.latent_space_size)
-    
+
     model.to(device)
 
     # Loading the state_dict into the model
@@ -1013,7 +1026,7 @@ def save_loss_components(loss_data, component_names, suffix, save_dir="loss_outp
       - component_names: a list of strings naming each component in the tuple
       - suffix: a string keyword to be appended (separated by '_') to each filename
       - save_dir: directory to save .npy files (default "loss_outputs")
-    
+
     """
     # Ensure the save directory exists
     os.makedirs(save_dir, exist_ok=True)
@@ -1024,7 +1037,9 @@ def save_loss_components(loss_data, component_names, suffix, save_dir="loss_outp
     # Check that the number of components in each tuple matches the number of names provided.
     n_components = len(loss_data[0])
     if n_components != len(component_names):
-        raise ValueError("The length of each loss tuple must match the number of component names provided.")
+        raise ValueError(
+            "The length of each loss tuple must match the number of component names provided."
+        )
 
     # Unpack the list of tuples into a list of components using zip.
     # Each element in 'components' is a tuple containing that component from every iteration.
@@ -1049,7 +1064,7 @@ def save_loss_components(loss_data, component_names, suffix, save_dir="loss_outp
             else:
                 converted.append(val)
         arr = np.array(converted)
-        
+
         # Create filename with component name and appended suffix
         filename = os.path.join(save_dir, f"{name}_{suffix}.npy")
         np.save(filename, arr)

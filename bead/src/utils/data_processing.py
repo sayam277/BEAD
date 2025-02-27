@@ -102,14 +102,16 @@ def decode_pid(encoded_tensor_path, pid_map_path, decoded_tensor_path):
     print(f"Decoded tensor saved to {decoded_tensor_path}")
 
 
-def select_top_jets_and_constituents(jets, constituents, n_jets=3, n_constits=15, verbose=False):
+def select_top_jets_and_constituents(
+    jets, constituents, n_jets=3, n_constits=15, verbose=False
+):
     """
     Select top n_jets per event and, for each selected jet, top n_constits constituents.
-    
+
     Returns:
     - jets_out: (num_events, n_jets, jets.shape[1])
     - constits_out: (num_events, n_jets * n_constits, constituents.shape[1])
-    
+
     """
     # --- Pre-sort jets ---
     # Sort by event id (ascending) then by descending pT (column 4).
@@ -118,29 +120,36 @@ def select_top_jets_and_constituents(jets, constituents, n_jets=3, n_constits=15
 
     # --- Pre-sort constituents ---
     # Sort by event id, then by jet id, then by descending pT.
-    sort_idx_c = np.lexsort((-constituents[:, 4], constituents[:, 1], constituents[:, 0]))
+    sort_idx_c = np.lexsort(
+        (-constituents[:, 4], constituents[:, 1], constituents[:, 0])
+    )
     constits_sorted = constituents[sort_idx_c]
 
     # --- Group jets by event ---
-    evt_ids, evt_start, evt_counts = np.unique(jets_sorted[:, 0], return_index=True, return_counts=True)
+    evt_ids, evt_start, evt_counts = np.unique(
+        jets_sorted[:, 0], return_index=True, return_counts=True
+    )
     num_events = len(evt_ids)
 
     # Pre-allocate output arrays:
     jets_out = np.zeros((num_events, n_jets, jets.shape[1]), dtype=jets.dtype)
-    constits_out = np.zeros((num_events, n_jets * n_constits, constituents.shape[1]), dtype=constituents.dtype)
+    constits_out = np.zeros(
+        (num_events, n_jets * n_constits, constituents.shape[1]),
+        dtype=constituents.dtype,
+    )
 
     # Process each event:
     for i, evt_id in enumerate(evt_ids):
         # --- Select jets for this event ---
         start_j = evt_start[i]
         count_j = evt_counts[i]
-        evt_jets = jets_sorted[start_j:start_j + count_j]
+        evt_jets = jets_sorted[start_j : start_j + count_j]
         n_used_jets = min(n_jets, evt_jets.shape[0])
         jets_out[i, :n_used_jets, :] = evt_jets[:n_used_jets]
 
         # --- Extract constituents for this event ---
-        left_c = np.searchsorted(constits_sorted[:, 0], evt_id, side='left')
-        right_c = np.searchsorted(constits_sorted[:, 0], evt_id, side='right')
+        left_c = np.searchsorted(constits_sorted[:, 0], evt_id, side="left")
+        right_c = np.searchsorted(constits_sorted[:, 0], evt_id, side="right")
         evt_constits = constits_sorted[left_c:right_c]
 
         # Fill constituent slots sequentially
@@ -150,14 +159,16 @@ def select_top_jets_and_constituents(jets, constituents, n_jets=3, n_constits=15
             jet_id = jet[1]
             jet_btag = jet[3]
             # Filter constituents that belong to this jet.
-            mask = (evt_constits[:, 1] == jet_id)
+            mask = evt_constits[:, 1] == jet_id
             jet_constits = evt_constits[mask]
             n_used_constits = min(n_constits, jet_constits.shape[0])
             # Fill the flat constituent array
-            constits_out[i, constit_idx:constit_idx + n_used_constits, :] = jet_constits[:n_used_constits]
+            constits_out[i, constit_idx : constit_idx + n_used_constits, :] = (
+                jet_constits[:n_used_constits]
+            )
             # Ensure correct jet id and btag
-            constits_out[i, constit_idx:constit_idx + n_used_constits, 1] = jet_id
-            constits_out[i, constit_idx:constit_idx + n_used_constits, 3] = jet_btag
+            constits_out[i, constit_idx : constit_idx + n_used_constits, 1] = jet_id
+            constits_out[i, constit_idx : constit_idx + n_used_constits, 3] = jet_btag
             constit_idx += n_constits  # Move to next jet slot
 
     if verbose:
@@ -270,12 +281,14 @@ def process_and_save_tensors(
 
 def preproc_inputs(paths, config, keyword, verbose: bool = False):
     # Load data from files whose names start with 'bkg'
-    input_path = os.path.join(paths["data_path"], config.file_type, "tensors", "processed")
+    input_path = os.path.join(
+        paths["data_path"], config.file_type, "tensors", "processed"
+    )
 
     try:
         events_tensor, jets_tensor, constituents_tensor = helper.load_tensors(
-                input_path, keyword
-            )
+            input_path, keyword
+        )
     except ValueError as e:
         print(e)
         sys.exit(1)

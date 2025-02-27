@@ -58,13 +58,13 @@ def infer(
        and it is the `torch.utils.data.DataLoader` doing the splitting.
        Applying either `EarlyStopping` or `LR Scheduler` is also done here, all based on their respective `config` arguments.
        For reproducibility, the seeds can also be fixed in this function.
-    
+
     Args:
         model (modelObject): The model you wish to train
         data (Tuple): Tuple containing the training and validation data
         project_path (string): Path to the project directory
         config (dataClass): Base class selecting user inputs
-    
+
     Returns:
         modelObject: fully trained model ready to perform compression and decompression
     """
@@ -88,7 +88,7 @@ def infer(
         jets_sig,
         constituents_sig,
     )
-    
+
     (
         events_bkg,
         jets_bkg,
@@ -96,10 +96,7 @@ def infer(
         events_sig,
         jets_sig,
         constituents_sig,
-    ) = [
-        x.to(device)
-        for x in labeled_data
-    ]
+    ) = [x.to(device) for x in labeled_data]
 
     # Split data and labels
     if verbose:
@@ -108,27 +105,36 @@ def infer(
 
     # Reshape tensors to pass to conv layers
     (
-    events_bkg,
-    jets_bkg,
-    constituents_bkg,
-    events_sig,
-    jets_sig,
-    constituents_sig,
+        events_bkg,
+        jets_bkg,
+        constituents_bkg,
+        events_sig,
+        jets_sig,
+        constituents_sig,
     ) = data
 
     (
-    events_bkg_label,
-    jets_bkg_label,
-    constituents_bkg_label,
-    events_sig_label,
-    jets_sig_label,
-    constituents_sig_label,
+        events_bkg_label,
+        jets_bkg_label,
+        constituents_bkg_label,
+        events_sig_label,
+        jets_sig_label,
+        constituents_sig_label,
     ) = labels
 
     # Save labels
-    np.save(os.path.join(output_path, "results", "event_label.npy"), np.concatenate([events_bkg_label, events_sig_label]))
-    np.save(os.path.join(output_path, "results", "jet_label.npy"), np.concatenate([jets_bkg_label, jets_sig_label]))
-    np.save(os.path.join(output_path, "results", "constituent_label.npy"), np.concatenate([constituents_bkg_label, constituents_sig_label]))
+    np.save(
+        os.path.join(output_path, "results", "event_label.npy"),
+        np.concatenate([events_bkg_label, events_sig_label]),
+    )
+    np.save(
+        os.path.join(output_path, "results", "jet_label.npy"),
+        np.concatenate([jets_bkg_label, jets_sig_label]),
+    )
+    np.save(
+        os.path.join(output_path, "results", "constituent_label.npy"),
+        np.concatenate([constituents_bkg_label, constituents_sig_label]),
+    )
 
     # Reshape tensors to pass to conv layers
     if "ConvVAE" in config.model_name or "ConvAE" in config.model_name:
@@ -141,7 +147,14 @@ def infer(
             constituents_sig,
         ) = [
             x.unsqueeze(1).float()
-            for x in [events_bkg, jets_bkg, constituents_bkg, events_sig, jets_sig, constituents_sig]
+            for x in [
+                events_bkg,
+                jets_bkg,
+                constituents_bkg,
+                events_sig,
+                jets_sig,
+                constituents_sig,
+            ]
         ]
 
         data = (
@@ -152,7 +165,7 @@ def infer(
             jets_sig,
             constituents_sig,
         )
-    
+
     # Create datasets
     ds = helper.create_datasets(*data, *labels)
 
@@ -189,7 +202,7 @@ def infer(
     # Load the model and set to eval mode for inference
     model = helper.load_model(model_path=model_path, in_shape=in_shape, config=config)
     model.eval()
-    
+
     if verbose:
         print(f"Model loaded from {model_path}")
         print(f"Model architecture:\n{model}")
@@ -197,9 +210,7 @@ def infer(
         print(f"Inputs and model moved to device")
         # Pushing input data into the torch-DataLoader object and combines into one DataLoader object (a basic wrapper
         # around several DataLoader objects).
-        print(
-            "Loading data into DataLoader and using batch size of ", 1
-        )
+        print("Loading data into DataLoader and using batch size of ", 1)
 
     if config.deterministic_algorithm:
         if config.verbose:
@@ -215,7 +226,7 @@ def infer(
         test_dl_list = [
             DataLoader(
                 ds,
-                batch_size=1, # since we want the loss for every event, which then becomes the anomaly metric
+                batch_size=1,  # since we want the loss for every event, which then becomes the anomaly metric
                 shuffle=False,
                 worker_init_fn=seed_worker,
                 generator=g,
@@ -224,13 +235,19 @@ def infer(
             )
             for ds in [ds["events"], ds["jets"], ds["constituents"]]
         ]
-        
+
     else:
         test_dl_list = [
-            DataLoader(ds, batch_size=1, shuffle=False, drop_last=True, num_workers=config.parallel_workers,)
+            DataLoader(
+                ds,
+                batch_size=1,
+                shuffle=False,
+                drop_last=True,
+                num_workers=config.parallel_workers,
+            )
             for ds in [ds["events"], ds["jets"], ds["constituents"]]
         ]
-        
+
     # Unpacking the DataLoader lists
     test_dl_events, test_dl_jets, test_dl_constituents = test_dl_list
 
@@ -279,7 +296,7 @@ def infer(
 
     with torch.no_grad():
         for idx, batch in enumerate(tqdm(test_dl)):
-    
+
             inputs, labels = batch
 
             out = helper.call_forward(model, inputs)
@@ -315,10 +332,30 @@ def infer(
         print(f"Training the model took {(end - start) / 60:.3} minutes")
 
     # Convert all the data to numpy arrays
-    (reconstructed_data, mu_data, logvar_data, z0_data, zk_data, log_det_jacobian_data) = [np.array(x) for x in [reconstructed_data, mu_data, logvar_data, z0_data, zk_data, log_det_jacobian_data]]
-    
+    (
+        reconstructed_data,
+        mu_data,
+        logvar_data,
+        z0_data,
+        zk_data,
+        log_det_jacobian_data,
+    ) = [
+        np.array(x)
+        for x in [
+            reconstructed_data,
+            mu_data,
+            logvar_data,
+            z0_data,
+            zk_data,
+            log_det_jacobian_data,
+        ]
+    ]
+
     # Reshape the data
-    (reconstructed_data, mu_data, logvar_data, z0_data, zk_data) = [x.reshape(x.shape[0]*x.shape[1], *x.shape[2:]) for x in [reconstructed_data, mu_data, logvar_data, z0_data, zk_data]]
+    (reconstructed_data, mu_data, logvar_data, z0_data, zk_data) = [
+        x.reshape(x.shape[0] * x.shape[1], *x.shape[2:])
+        for x in [reconstructed_data, mu_data, logvar_data, z0_data, zk_data]
+    ]
 
     # Save all the data
     save_dir = os.path.join(output_path, "results")
@@ -347,7 +384,11 @@ def infer(
         log_det_jacobian_data,
     )
 
-    helper.save_loss_components(loss_data=test_loss_data, component_names=loss_fn.component_names, suffix="test", save_dir=save_dir)
-    
+    helper.save_loss_components(
+        loss_data=test_loss_data,
+        component_names=loss_fn.component_names,
+        suffix="test",
+        save_dir=save_dir,
+    )
 
     return True
