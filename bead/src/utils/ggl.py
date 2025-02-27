@@ -406,7 +406,7 @@ def prepare_inputs(paths, config, verbose: bool = False):
                 in_path, keyword
             )
             if verbose:
-                print("Data augmented successfully")
+                print(f"Data augmented successfully for {keyword} files")
                 print("Events tensor shape:", events_tensor.shape)
                 print("Jets tensor shape:", jets_tensor.shape)
                 print("Constituents tensor shape:", constituents_tensor.shape)

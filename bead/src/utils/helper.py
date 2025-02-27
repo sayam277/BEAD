@@ -351,7 +351,7 @@ def load_tensors(folder_path, keyword="sig_test"):
     for category, files in file_categories.items():
         if not files:
             raise ValueError(
-                "Required files not found. Please run the --mode convert_csv and prepare_inputs before retrying."
+                f"Required files with keyword, '{keyword}' not found. Please run the --mode convert_csv and prepare_inputs before retrying."
             )
         result_tensors[category] = load_and_concat(files)
 
@@ -395,7 +395,7 @@ def load_augment_tensors(folder_path, keyword):
     # Check if the keyword is valid
     if keyword not in ["bkg_train", "bkg_test"]:
         raise ValueError(
-            "Invalid keyword. Please choose from 'bkg_train', 'bkg_test', or 'sig_test'."
+            "Invalid keyword. Please choose from 'bkg_train' or 'bkg_test'."
         )
 
     # Define the categories and generator subcategories.
@@ -414,6 +414,7 @@ def load_augment_tensors(folder_path, keyword):
         if keyword not in filename:
             continue
 
+        keyword_found = True
         lower_filename = filename.lower()
         # Determine category based on substring in the filename.
         for cat in categories:
