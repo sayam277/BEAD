@@ -1580,6 +1580,17 @@ files = [
 six = ">=1.5"
 
 [[package]]
+name = "pytorch-gpu"
+version = "0.0.1"
+description = "torch-gpu"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "pytorch_gpu-0.0.1-py3-none-any.whl", hash = "sha256:f239c15a9579a7ed6dd582f4760394ffeda274979843c4684940b82aee65eba8"},
+]
+
+[[package]]
 name = "pyyaml"
 version = "6.0.2"
 description = "YAML parser and emitter for Python"
@@ -2355,4 +2366,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "ae64305a0b2c63885bf6646f2730dcc77a20637abd4742294508d3ce26f6ee29"
+content-hash = "f21fca0686a978725a5a514f945612bc4ecafb7f521e66b9b2fea7adcabbf9e0"
