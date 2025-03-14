@@ -1,0 +1,22 @@
+ #!/bin/bash
+#SBATCH --job-name=BEAD_all_models
+#SBATCH --output=logs/all_models_%j.log
+#SBATCH --time=24:00:00
+#SBATCH --mem=64G
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=16
+
+module load anaconda
+source activate bead_env
+
+models=("Planar_ConvVAE" "NormFlow_ConvVAE")
+
+for model in "${models[@]}"; do
+    python run.py --mode train \
+                 --data monotop_200_A \
+                 --model $model \
+                 --epochs 500 \
+                 --save_every 100
+done
+
+python run.py --mode plot
